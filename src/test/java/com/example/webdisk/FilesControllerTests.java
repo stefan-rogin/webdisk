@@ -18,11 +18,11 @@ class FilesControllerTests {
     @Autowired
     private MockMvc mockMvc; 
 
-	@Test
-	void contextLoads() throws Exception {
+    @Test
+    void contextLoads() throws Exception {
         this.mockMvc.perform(get("/files/size")).andDo(print())
             .andExpect(status().isOk())
             .andExpect(content().json("{size:25}"));
-	}
+    }
 
 }
