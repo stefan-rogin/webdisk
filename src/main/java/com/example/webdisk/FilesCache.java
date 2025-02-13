@@ -14,4 +14,8 @@ public class FilesCache {
         return this.files.keySet().stream().filter(file -> !file.matches(pattern)).toArray(String[]::new);
     }
 
+    public int getSize() {
+        return files.size() + 1001; // Just to have something
+    }
+
 }

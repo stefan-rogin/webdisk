@@ -25,7 +25,7 @@ class FilesControllerTests {
         this.mockMvc.perform(get("/files/size")).andDo(print())
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.size").value(25));
+            .andExpect(jsonPath("$.size").value(1001));
     }
 
 }
