@@ -8,22 +8,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.annotation.PostConstruct;
 
 import com.example.webdisk.response.FilesSizeResponse;
+import org.springframework.web.bind.annotation.PathVariable;
+
 
 @RestController
 public class FilesController {
 
     @Autowired
     private FilesCache cache;
+
     @Autowired
     private FilesAccess storage;
-
-
-
-    // Move to own class
 
     @PostConstruct
     public void initialize() {
         // TODO: mock IO for tests
+        // How long does it take?
         try {
             this.storage.listFiles().forEach(f -> this.cache.putFile(f));
         } catch  (Exception ioException) {
@@ -36,13 +36,25 @@ public class FilesController {
         return new FilesSizeResponse(this.cache.getSize());
     }
 
-    @PostMapping("/files/generate")
+    @PostMapping("/files/inflate")
     public void generate() {
         final int RECORDS = 100;
         for (int i = 0; i < RECORDS; i++) {
             this.cache.putFile(FilesSample.generateFileName());
         }
-
+    }
+    
+    @GetMapping("/files/{fileName}")
+    public String getFile(@PathVariable String fileName) {
+        if (!this.cache.hasFile(fileName)) {
+            return "404";
+        }
+        try {
+            return new String(storage.getFile(fileName));
+        } catch (Exception ex) {
+            // TODO: Handle it
+        }
+        return new String();
     }
     
 }

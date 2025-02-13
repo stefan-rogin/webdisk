@@ -29,4 +29,8 @@ public class FilesAccess {
         }
     }
 
+    public byte[] getFile(String fileName) throws IOException {
+        return Files.readAllBytes(Paths.get(this.path + "/" + fileName));
+    }
+
 }

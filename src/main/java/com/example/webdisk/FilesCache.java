@@ -10,8 +10,8 @@ public class FilesCache {
 
     private final Set<String> files = new HashSet<String>();
 
-    public String getFile(String fileName) {
-        return this.files.contains(fileName) ? "one" : "none"; // Just to have something
+    public boolean hasFile(String fileName) {
+        return this.files.contains(fileName);
     }
 
     public void putFile(String fileName) {
