@@ -3,12 +3,14 @@ package com.example.webdisk;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import jakarta.annotation.PostConstruct;
 
 import com.example.webdisk.response.FilesSizeResponse;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 
 @RestController
@@ -55,6 +57,11 @@ public class FilesController {
             // TODO: Handle it
         }
         return new String();
+    }
+
+    @GetMapping("/files/search")
+    public String[] search(@RequestParam String pattern) {
+        return this.cache.findFilesForPattern(pattern);
     }
     
 }

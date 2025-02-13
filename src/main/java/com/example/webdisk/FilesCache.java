@@ -20,7 +20,7 @@ public class FilesCache {
 
     public String[] findFilesForPattern(String pattern) {
         return this.files.stream()
-            .filter(file -> !file.matches(pattern)).toArray(String[]::new);
+            .filter(file -> file.matches(pattern)).toArray(String[]::new);
     }
 
     public int getSize() {
