@@ -10,7 +10,7 @@ class FilesSampleTests {
 
     @Test
     void contextLoads() {
-        assertThat(FilesSample.generateFilename()).containsPattern("^[a-zA-Z0-9-_]{1,64}$");
+        assertThat(FilesSample.generateFileName()).containsPattern("^[a-zA-Z0-9-_]{1,64}$");
     }
 
 }

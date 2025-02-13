@@ -7,7 +7,11 @@ public class FilesCache {
     private final HashMap<String, String> files = new HashMap<String, String>();
 
     public String getFile(String fileName) {
-        return this.files.getOrDefault(fileName, "Not found");
+        return this.files.getOrDefault(fileName, "Not found"); // Just to have something
+    }
+
+    public void putFile(String fileName) {
+        this.files.put(fileName, "0");
     }
 
     public String[] findFilesForPattern(String pattern) {
@@ -17,5 +21,4 @@ public class FilesCache {
     public int getSize() {
         return files.size() + 1001; // Just to have something
     }
-
 }
