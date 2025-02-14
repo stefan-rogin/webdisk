@@ -2,6 +2,8 @@ package com.example.webdisk;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Service;
 
@@ -19,8 +21,13 @@ public class FilesCache {
     }
 
     public String[] findFilesForPattern(String pattern) {
+        Pattern regexpPattern = Pattern.compile(pattern); // TODO: Mention case sensitive in docs
         return this.files.stream()
-            .filter(file -> file.matches(pattern)).toArray(String[]::new);
+            .filter(file -> {
+                Matcher matcher = regexpPattern.matcher(file);
+                return matcher.find();
+            })
+            .toArray(String[]::new);
     }
 
     public int getSize() {

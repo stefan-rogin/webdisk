@@ -30,7 +30,11 @@ public class FilesAccess {
     }
 
     public byte[] getFile(String fileName) throws IOException {
-        return Files.readAllBytes(Paths.get(this.path + "/" + fileName));
+        return Files.readAllBytes(Paths.get(this.path + "/" + fileName)); 
+    }
+
+    public void putFile(String fileName, byte[] content) throws IOException {
+
     }
 
 }
