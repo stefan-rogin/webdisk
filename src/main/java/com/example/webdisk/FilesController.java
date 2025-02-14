@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.annotation.PostConstruct;
 
 import com.example.webdisk.response.FilesSizeResponse;
+import org.springframework.web.bind.annotation.RequestBody;
+
 
 
 @RestController
@@ -34,21 +36,21 @@ public class FilesController {
     }
 
     @GetMapping("/files/size")
-    public FilesSizeResponse getStorageSize() {
+    public FilesSizeResponse getFilesSize() {
         return new FilesSizeResponse(this.cache.getSize());
     }
 
     @PostMapping("/files/inflate")
-    public void generate() {
+    public void postFilesInflate() {
         final int RECORDS = 100;
         for (int i = 0; i < RECORDS; i++) {
-            this.cache.putFile(FilesSample.generateFileName());
+            this.cache.putFile(FilesCache.generateFileName());
         }
     }
     
     @GetMapping("/files/{fileName}")
-    public String getFile(@PathVariable String fileName) {
-        if (!this.cache.hasFile(fileName)) {
+    public String getFileForFileName(@PathVariable String fileName) {
+        if (!this.cache.containsFile(fileName)) {
             return "404";
         }
         try {
@@ -60,8 +62,27 @@ public class FilesController {
     }
 
     @GetMapping("/files/search")
-    public String[] search(@RequestParam String pattern) {
+    public String[] getFilesSearch(@RequestParam String pattern) {
         return this.cache.findFilesForPattern(pattern);
+    }
+    
+    @PostMapping("/files")
+    public String postFile(@RequestBody String content) {
+        boolean newFileNameFound = false;
+        String newFileName = new String();
+        while (!newFileNameFound) {
+            String newFileNameTry = FilesCache.generateFileName();
+            if (!this.cache.containsFile(newFileNameTry)) {
+                newFileName = newFileNameTry;
+                newFileNameFound = true;
+            }
+        }
+        try {
+            this.storage.putFile(newFileName, content.getBytes());
+        } catch (Exception exception) {
+            // TODO: Handle it
+        }
+        return newFileName;
     }
     
 }

@@ -1,5 +1,6 @@
 package com.example.webdisk;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import java.nio.file.Files;
@@ -34,7 +35,9 @@ public class FilesAccess {
     }
 
     public void putFile(String fileName, byte[] content) throws IOException {
-
+        try (FileOutputStream file = new FileOutputStream(this.path + "/" + fileName)) {
+            file.write(content);
+        }
     }
 
 }
