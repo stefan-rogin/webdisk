@@ -23,10 +23,12 @@ public class FilesCache {
     }
 
     public String newFile() {
-        return Stream.generate(new FilesNameSupplier())
-            .filter(fileName -> !this.files.contains(fileName))
-            .limit(1)
-            .collect(Collectors.joining());
+        String newFileName = Stream.generate(new FilesNameSupplier())
+                .filter(fileName -> !this.files.contains(fileName))
+                .limit(1)
+                .collect(Collectors.joining());
+        this.putFile(newFileName);
+        return newFileName;
     }
 
     public String[] findFilesForPattern(String pattern) {

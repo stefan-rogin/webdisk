@@ -5,6 +5,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
+
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 
@@ -44,7 +47,7 @@ public class FilesController {
     public void postFilesInflate() {
         final int RECORDS = 100;
         for (int i = 0; i < RECORDS; i++) {
-            this.cache.putFile(FilesCache.generateFileName());
+            this.cache.newFile();
         }
     }
     
@@ -68,18 +71,11 @@ public class FilesController {
     
     @PostMapping("/files")
     public String postFile(@RequestBody String content) {
-        boolean newFileNameFound = false;
-        String newFileName = new String();
-        while (!newFileNameFound) {
-            String newFileNameTry = FilesCache.generateFileName();
-            if (!this.cache.containsFile(newFileNameTry)) {
-                newFileName = newFileNameTry;
-                newFileNameFound = true;
-            }
-        }
+        String newFileName = this.cache.newFile();
         try {
             this.storage.putFile(newFileName, content.getBytes());
-        } catch (Exception exception) {
+        } catch (IOException exception) {
+            // this.cache.remove(newFileName);
             // TODO: Handle it
         }
         return newFileName;
