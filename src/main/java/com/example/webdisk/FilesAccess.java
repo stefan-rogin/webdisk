@@ -2,6 +2,7 @@ package com.example.webdisk;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,8 +31,8 @@ public class FilesAccess {
         }
     }
 
-    public byte[] getFile(String fileName) throws IOException {
-        return Files.readAllBytes(Paths.get(this.path + "/" + fileName)); 
+    public InputStream getFile(String fileName) throws IOException {
+        return Files.newInputStream(Paths.get(this.path + "/" + fileName)); 
     }
 
     public void putFile(String fileName, byte[] content) throws IOException {
