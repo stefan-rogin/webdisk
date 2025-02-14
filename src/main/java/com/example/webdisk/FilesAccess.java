@@ -1,6 +1,5 @@
 package com.example.webdisk;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -14,6 +13,7 @@ import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class FilesAccess {
@@ -35,10 +35,8 @@ public class FilesAccess {
         return Files.newInputStream(Paths.get(this.path + "/" + fileName)); 
     }
 
-    public void putFile(String fileName, byte[] content) throws IOException {
-        try (FileOutputStream file = new FileOutputStream(this.path + "/" + fileName)) {
-            file.write(content);
-        }
+    public void putFile(String fileName, MultipartFile content) throws IOException {
+        Files.copy(content.getInputStream(), Paths.get(this.path + "/" + fileName));
     }
 
 }

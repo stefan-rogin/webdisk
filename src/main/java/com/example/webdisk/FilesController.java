@@ -1,20 +1,22 @@
 package com.example.webdisk;
 
 import org.springframework.web.bind.annotation.RestController;
-
-import com.example.webdisk.response.FilesSizeResponse;
-
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+
+import com.example.webdisk.response.FilesPostFileResponse;
+import com.example.webdisk.response.FilesSearchResponse;
+import com.example.webdisk.response.FilesSizeResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,8 +38,8 @@ public class FilesController {
         // TODO: mock IO for tests
         // How long does it take?
         try {
-            this.storage.listFiles().forEach(f -> this.cache.putFile(f));
-        } catch  (Exception ioException) {
+            this.storage.listFiles().forEach(fileName-> this.cache.putFile(fileName));
+        } catch  (IOException e) {
             // TODO: Handle
         }
     }
@@ -62,26 +64,26 @@ public class FilesController {
                     .headers(headers)
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .body(resource);
-        } catch (Exception ex) {
+        } catch (Exception e) {
             return ResponseEntity.status(500).build();
         }
     }
 
     @GetMapping("/search")
-    public String[] getFilesSearch(@RequestParam String pattern) {
-        return this.cache.findFilesForPattern(pattern);
+    public ResponseEntity<FilesSearchResponse> getFilesSearch(@RequestParam String pattern) {
+        return ResponseEntity.ok(new FilesSearchResponse(this.cache.findFilesForPattern(pattern)));
     }
     
     @PostMapping("/")
-    public String postFile(@RequestBody String content) {
+    public ResponseEntity<FilesPostFileResponse> postFile(@RequestBody MultipartFile content) {
         String newFileName = this.cache.newFile();
         try {
-            this.storage.putFile(newFileName, content.getBytes());
-        } catch (IOException exception) {
-            // this.cache.remove(newFileName);
-            // TODO: Handle it
+            this.storage.putFile(newFileName, content);
+        } catch (IOException e) {
+            // this.cache.delete(fileName);
+            return ResponseEntity.status(500).build();
         }
-        return newFileName;
+        return ResponseEntity.ok(new FilesPostFileResponse(newFileName));
     }
     
 }
