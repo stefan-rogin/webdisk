@@ -41,7 +41,6 @@ public class FilesController {
     @PostConstruct
     public void initialize() {
         // TODO: mock IO for tests
-        // How long does it take?
         try {
             this.storage.listFiles().forEach(fileName-> this.cache.putFile(fileName));
         } catch  (IOException e) {
