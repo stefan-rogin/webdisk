@@ -20,8 +20,11 @@ import com.example.webdisk.response.FilesSizeResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/files")
@@ -33,6 +36,8 @@ public class FilesController {
     @Autowired
     private FilesAccess storage;
 
+    private static final Logger logger = LoggerFactory.getLogger(FilesController.class);
+
     @PostConstruct
     public void initialize() {
         // TODO: mock IO for tests
@@ -40,17 +45,20 @@ public class FilesController {
         try {
             this.storage.listFiles().forEach(fileName-> this.cache.putFile(fileName));
         } catch  (IOException e) {
-            // TODO: Handle
+            logger.error("Unable to read from storage location", e);
         }
     }
 
     @GetMapping("/size")
-    public ResponseEntity<FilesSizeResponse> getFilesSize() {
+    public ResponseEntity<FilesSizeResponse> getFilesSize(HttpServletRequest request) {
+        logger.info("{} {}", request.getMethod(), request.getRequestURI());
         return ResponseEntity.ok(new FilesSizeResponse(this.cache.getSize()));
     }
     
     @GetMapping("/{fileName}")
-    public ResponseEntity<InputStreamResource> getFileForFileName(@PathVariable String fileName) {
+    public ResponseEntity<InputStreamResource> getFileForFileName(@PathVariable String fileName, HttpServletRequest request) {
+        logger.info("{} {}", request.getMethod(), request.getRequestURI());
+
         if (!this.cache.containsFile(fileName)) {
             return ResponseEntity.status(404).build();
         }
@@ -65,22 +73,27 @@ public class FilesController {
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .body(resource);
         } catch (Exception e) {
+            logger.error("{} {}: Unable to read file", request.getMethod(), request.getRequestURI(), e);
             return ResponseEntity.status(500).build();
         }
     }
 
     @GetMapping("/search")
-    public ResponseEntity<FilesSearchResponse> getFilesSearch(@RequestParam String pattern) {
+    public ResponseEntity<FilesSearchResponse> getFilesSearch(@RequestParam String pattern, HttpServletRequest request) {
+        logger.info("{} {}", request.getMethod(), request.getRequestURI());
         return ResponseEntity.ok(new FilesSearchResponse(this.cache.findFilesForPattern(pattern)));
     }
     
     @PostMapping("/")
-    public ResponseEntity<FilesPostFileResponse> postFile(@RequestBody MultipartFile content) {
+    public ResponseEntity<FilesPostFileResponse> postFile(@RequestBody MultipartFile content, HttpServletRequest request) {
+        logger.info("{} {}", request.getMethod(), request.getRequestURI());
+
         String newFileName = this.cache.newFile();
         try {
             this.storage.putFile(newFileName, content);
         } catch (IOException e) {
             // this.cache.delete(fileName);
+            logger.error("{} {}: Unable to post new file", request.getMethod(), request.getRequestURI(), e);
             return ResponseEntity.status(500).build();
         }
         return ResponseEntity.ok(new FilesPostFileResponse(newFileName));
