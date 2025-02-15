@@ -13,12 +13,12 @@ class FilesCacheTests {
 
     @Test
     void shouldStartEmpty() {
-        assertThat(cache.getSize()).isEqualTo(0);
+        assertThat(cache.getSize()).isZero();
     }
 
     @Test
     void shouldReturnItsSize() {
-        assertThat(cache.getSize()).isEqualTo(0);
+        assertThat(cache.getSize()).isZero();
         cache.putFile("one");
         assertThat(cache.getSize()).isEqualTo(1);
         cache.putFile("anotherone");
@@ -27,14 +27,14 @@ class FilesCacheTests {
 
     @Test
     void shouldReturnIfAFileIsPresentInCache() {
-        assertThat(cache.getSize()).isEqualTo(0);
+        assertThat(cache.getSize()).isZero();
         cache.putFile("one");
         assertThat(cache.containsFile("one")).isTrue();
     }
 
     @Test
     void shouldFindFilesForAGivenPattern() {
-        assertThat(cache.getSize()).isEqualTo(0);
+        assertThat(cache.getSize()).isZero();
         cache.putFile("one");
         cache.putFile("anotherone");
         cache.putFile("xyz");
@@ -44,7 +44,7 @@ class FilesCacheTests {
 
     @Test
     void shouldNotFindFilesForAGivenPatternWithNoMatches() {
-        assertThat(cache.getSize()).isEqualTo(0);
+        assertThat(cache.getSize()).isZero();
         cache.putFile("one");
         cache.putFile("anotherone");
         cache.putFile("xyz");
@@ -53,7 +53,7 @@ class FilesCacheTests {
 
     @Test
     void shouldGenerateNewFileNames() {
-        assertThat(cache.getSize()).isEqualTo(0);
+        assertThat(cache.getSize()).isZero();
         assertThat(cache.newFile()).containsPattern("^[a-zA-Z0-9-_]{1,64}$");
         assertThat(cache.getSize()).isEqualTo(1);
         assertThat(cache.newFile()).containsPattern("^[a-zA-Z0-9-_]{1,64}$");

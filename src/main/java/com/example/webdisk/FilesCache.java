@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class FilesCache {
 
-    private final Set<String> files = new HashSet<String>();
+    private final Set<String> files = new HashSet<>();
 
     public boolean containsFile(String fileName) {
         return this.files.contains(fileName);

@@ -23,12 +23,11 @@ public class FilesNameSupplier implements Supplier<String> {
         // A-Z: 65-90
         // -_: 45,95
         int randomFileNameLength = generator.nextInt(MIN_FILENAME_LENGTH, MAX_FILENAME_LENGTH + 1);
-        String randomFileName = generator.ints(LIMIT_ASCII_LOW, LIMIT_ASCII_HIGH + 1)
+        return generator.ints(LIMIT_ASCII_LOW, LIMIT_ASCII_HIGH + 1)
                 .filter(n -> n == 45 || (n >= 48 && n <= 57) || (n >= 65 && n <= 90) || n == 95
                         || (n >= 97 && n <= 122))
                 .limit(randomFileNameLength)
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
-        return randomFileName;
     }
 }
