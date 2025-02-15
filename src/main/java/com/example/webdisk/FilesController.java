@@ -99,4 +99,10 @@ public class FilesController {
         return ResponseEntity.ok(new FilesPostFileResponse(newFileName));
     }
     
+    @GetMapping("/restricted")
+    public ResponseEntity<String> getFilesRestricted(HttpServletRequest request) {
+        logger.info("{} {}", request.getMethod(), request.getRequestURI());
+        return ResponseEntity.ok("Authorized");
+    }
+    
 }
