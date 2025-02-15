@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.example</groupId>
     <artifactId>webdisk</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>WebDisk</name>
     <description>Playground project that stores files on the web</description>
     <url/>
@@ -64,6 +64,7 @@
     </dependencies>
 
     <build>
+        <finalName>webdisk</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -97,7 +98,6 @@
         <groupId>org.sonarsource.scanner.maven</groupId>
         <artifactId>sonar-maven-plugin</artifactId>
         <version>3.7.0.1746</version>
-      
       </plugin>
         </plugins>
     </build>
