@@ -21,7 +21,7 @@ public class FilesAccess {
     private String path;
 
     public List<String> listFiles() throws IOException {
-        try (Stream<Path> stream = Files.list(Paths.get(this.path))) {
+        try (Stream<Path> stream = Files.list(Paths.get(path))) {
             return stream
                     .filter(file -> !Files.isDirectory(file))
                     .map(file -> file.getFileName().toString())
@@ -31,11 +31,15 @@ public class FilesAccess {
     }
 
     public InputStream getFile(String fileName) throws IOException {
-        return Files.newInputStream(Paths.get(this.path + "/" + fileName)); 
+        return Files.newInputStream(Paths.get(path + "/" + fileName)); 
     }
 
     public void putFile(String fileName, MultipartFile content) throws IOException {
-        Files.copy(content.getInputStream(), Paths.get(this.path + "/" + fileName));
+        Files.copy(content.getInputStream(), Paths.get(path + "/" + fileName));
+    }
+
+    public String getPath() {
+        return path;
     }
 
 }

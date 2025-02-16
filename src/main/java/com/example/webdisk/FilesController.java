@@ -22,6 +22,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
+import java.time.Instant;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +40,7 @@ public class FilesController {
     private FilesAccess storage;
 
     private static final Logger logger = LoggerFactory.getLogger(FilesController.class);
-    private static final String LOG_WEB = "{} {}";
+    private static final String LOG_WEB_FORMAT = "{} {}";
 
     public FilesController(FilesCache cache, FilesAccess storage) {
         this.cache = cache;
@@ -45,38 +48,58 @@ public class FilesController {
     }
 
     /**
-     * Populate the cache with the existing filenames from storage when the application starts.
-     * Performs IO operations. 
+     * Populate the cache with the existing filenames from storage when the
+     * application starts.
+     * Performs IO operations.
      */
     @PostConstruct
     public void initialize() {
         // TODO: mock IO for tests
+        initCache();
+    }
+
+    protected void initCache() {
         try {
-            this.storage.listFiles().forEach(fileName-> this.cache.putFile(fileName));
-        } catch  (IOException e) {
-            // The cache will be empty if the storage location is unaccessible
+            logger.info("Initializing cache from path: {}", storage.getPath());
+
+            Instant start = Instant.now();
+            storage.listFiles().forEach(fileName -> cache.putFile(fileName));
+            Instant end = Instant.now();
+
+            logger.info("Cache initialized, took {}", Duration.between(start, end));
+            logger.info("Cache size: {}", cache.getSize());
+        } catch (IOException e) {
+            // The app will start with an empty cache if the storage location is
+            // unaccessible
             logger.error("Unable to read from storage location", e.getMessage());
         }
     }
 
     /**
-     * Get the total number of files stored, as present in cache.
-     * It does not perform IO operations.
-     * @param request 
-     * @return { size: <int> }
+     * Handles the HTTP GET request to obtain the size of cached files.
+     * <p>
+     * This method logs the incoming request method and URI, and returns the size of the 
+     * cached files encapsulated in a {@link FilesSizeResponse} object.
+     * </p>
+     *
+     * @param request the {@link HttpServletRequest} object that contains the
+     *          request the client has made to the servlet
+     * @return a {@link ResponseEntity} containing the {@link FilesSizeResponse}
+     *          with the size of the cached files
      */
     @Operation(summary = "Storage size", description = "Returns the total number of files stored by the application")
     @GetMapping("/size")
     public ResponseEntity<FilesSizeResponse> getFilesSize(HttpServletRequest request) {
-        logger.info(LOG_WEB, request.getMethod(), request.getRequestURI());
-        return ResponseEntity.ok(new FilesSizeResponse(this.cache.getSize()));
+        logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
+        return ResponseEntity.ok(new FilesSizeResponse(cache.getSize()));
     }
-    
-    @GetMapping("/{fileName}")
-    public ResponseEntity<InputStreamResource> getFileForFileName(@PathVariable String fileName, HttpServletRequest request) {
-        logger.info(LOG_WEB, request.getMethod(), request.getRequestURI());
 
-        if (!this.cache.containsFile(fileName)) {
+    @GetMapping("/{fileName}")
+    public ResponseEntity<InputStreamResource> getFileForFileName(@PathVariable String fileName,
+            HttpServletRequest request) {
+        logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
+
+        if (!cache.containsFile(fileName)) {
             return ResponseEntity.status(404).build();
         }
         try {
@@ -90,36 +113,38 @@ public class FilesController {
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .body(resource);
         } catch (Exception e) {
-            logger.error(LOG_WEB + ": Unable to read file", request.getMethod(), request.getRequestURI(), e);
+            logger.error(LOG_WEB_FORMAT + ": Unable to read file", request.getMethod(), request.getRequestURI(), e);
             return ResponseEntity.status(500).build();
         }
     }
 
     @GetMapping("/search")
-    public ResponseEntity<FilesSearchResponse> getFilesSearch(@RequestParam String pattern, HttpServletRequest request) {
-        logger.info(LOG_WEB, request.getMethod(), request.getRequestURI());
-        return ResponseEntity.ok(new FilesSearchResponse(this.cache.findFilesForPattern(pattern)));
+    public ResponseEntity<FilesSearchResponse> getFilesSearch(@RequestParam String pattern,
+            HttpServletRequest request) {
+        logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
+        return ResponseEntity.ok(new FilesSearchResponse(cache.findFilesForPattern(pattern)));
     }
-    
-    @PostMapping("/")
-    public ResponseEntity<FilesPostFileResponse> postFile(@RequestBody MultipartFile content, HttpServletRequest request) {
-        logger.info(LOG_WEB, request.getMethod(), request.getRequestURI());
 
-        String newFileName = this.cache.newFile();
+    @PostMapping("/")
+    public ResponseEntity<FilesPostFileResponse> postFile(@RequestBody MultipartFile content,
+            HttpServletRequest request) {
+        logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
+
+        String newFileName = cache.newFile();
         try {
-            this.storage.putFile(newFileName, content);
+            storage.putFile(newFileName, content);
         } catch (IOException e) {
-            // this.cache.delete(fileName);
-            logger.error(LOG_WEB + ": Unable to post new file", request.getMethod(), request.getRequestURI(), e);
+            // TODO: cache.delete(fileName);
+            logger.error(LOG_WEB_FORMAT + ": Unable to post new file", request.getMethod(), request.getRequestURI(), e);
             return ResponseEntity.status(500).build();
         }
         return ResponseEntity.ok(new FilesPostFileResponse(newFileName));
     }
-    
+
     @GetMapping("/restricted")
     public ResponseEntity<String> getFilesRestricted(HttpServletRequest request) {
-        logger.info(LOG_WEB, request.getMethod(), request.getRequestURI());
+        logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
         return ResponseEntity.ok("Authorized");
     }
-    
+
 }

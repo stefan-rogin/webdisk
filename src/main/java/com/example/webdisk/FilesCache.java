@@ -15,25 +15,25 @@ public class FilesCache {
     private final Set<String> files = new HashSet<>();
 
     public boolean containsFile(String fileName) {
-        return this.files.contains(fileName);
+        return files.contains(fileName);
     }
 
     public void putFile(String fileName) {
-        this.files.add(fileName);
+        files.add(fileName);
     }
 
     public String newFile() {
         String newFileName = Stream.generate(new FilesNameSupplier())
-                .filter(fileName -> !this.files.contains(fileName))
+                .filter(fileName -> !files.contains(fileName))
                 .limit(1)
                 .collect(Collectors.joining());
-        this.putFile(newFileName);
+        putFile(newFileName);
         return newFileName;
     }
 
     public String[] findFilesForPattern(String pattern) {
         Pattern regexpPattern = Pattern.compile(pattern); // TODO: Mention case sensitive in docs
-        return this.files.stream()
+        return files.stream()
                 .filter(file -> {
                     Matcher matcher = regexpPattern.matcher(file);
                     return matcher.find();
@@ -42,6 +42,6 @@ public class FilesCache {
     }
 
     public int getSize() {
-        return this.files.size();
+        return files.size();
     }
 }
