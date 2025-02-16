@@ -31,11 +31,11 @@ import org.springframework.stereotype.Service;
  * <pre>
  * {@code
  * FilesCache filesCache = new FilesCache();
- * filesCache.putFile("example.txt");
- * boolean exists = filesCache.containsFile("example.txt");
+ * filesCache.putFile("example_txt");
+ * boolean exists = filesCache.containsFile("example_txt");
  * String newFileName = filesCache.newFile();
- * String[] matchingFiles = filesCache.findFilesForPattern(".*\\.txt");
- * filesCache.deleteFile("example.txt");
+ * String[] matchingFiles = filesCache.findFilesForPattern(".*\\_txt");
+ * filesCache.deleteFile("example_txt");
  * int size = filesCache.getSize();
  * }
  * </pre>
