@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
  * <p>
  * The cache is implemented using a {@link HashSet} to store the file names.
  * </p>
- * <p>
  * Methods provided:
  * <ul>
  *   <li>{@link #containsFile(String)} - Checks if a file name is present in the cache.</li>
@@ -28,8 +27,6 @@ import org.springframework.stereotype.Service;
  *   <li>{@link #deleteFile(String)} - Deletes a file name from the cache.</li>
  *   <li>{@link #getSize()} - Returns the number of file names in the cache.</li>
  * </ul>
- * </p>
- * <p>
  * Example usage:
  * <pre>
  * {@code
@@ -42,7 +39,6 @@ import org.springframework.stereotype.Service;
  * int size = filesCache.getSize();
  * }
  * </pre>
- * </p>
  */
 @Service
 public class FilesCache {
