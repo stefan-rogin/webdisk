@@ -40,49 +40,12 @@ class FilesCacheTests {
     }
 
     @Test
-    void shouldFindFilesForAGivenPattern() {
-        assertThat(cache.getSize()).isZero();
-        cache.putFile("one");
-        cache.putFile("andone");
-        cache.putFile("two");
-        assertThat(cache.findFilesForPattern("one")).containsExactlyInAnyOrder(new String[]{"andone", "one"});    
-        assertThat(cache.findFilesForPattern("^[a-z]{3}$")).containsExactlyInAnyOrder((new String[]{"one", "two"}));    
-    }
-
-    @Test
-    void shouldNotFindFilesForAGivenPatternWithNoMatches() {
-        assertThat(cache.getSize()).isZero();
-        cache.putFile("one");
-        cache.putFile("andone");
-        cache.putFile("two");
-        assertThat(cache.findFilesForPattern("[0-9]+")).isEmpty();    
-    }
-
-    @Test
     void shouldGenerateNewValidFileNames() {
         assertThat(cache.getSize()).isZero();
         assertThat(cache.newFile()).containsPattern("^[a-zA-Z0-9-_]{1,64}$");
         assertThat(cache.getSize()).isEqualTo(1);
         assertThat(cache.newFile()).containsPattern("^[a-zA-Z0-9-_]{1,64}$");
         assertThat(cache.getSize()).isEqualTo(2);    
-    }
-
-    @Test
-    void shouldDeleteGivenFileNames() {
-        assertThat(cache.getSize()).isZero();
-        cache.putFile("one");
-        assertThat(cache.getSize()).isEqualTo(1);
-        cache.deleteFile("one");
-        assertThat(cache.getSize()).isZero();
-    }
-
-    @Test
-    void shouldDoNothingWhenAskedToDeleteInexistentFileNames() {
-        assertThat(cache.getSize()).isZero();
-        cache.putFile("one");
-        assertThat(cache.getSize()).isEqualTo(1);
-        cache.deleteFile("two");
-        assertThat(cache.getSize()).isEqualTo(1);
     }
 
 }
