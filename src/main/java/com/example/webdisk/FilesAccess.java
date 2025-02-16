@@ -22,7 +22,7 @@ public class FilesAccess {
     @Value("${webdisk.path}")
     public void setPath(String path) {
         // Sanitize configured path
-        this.path = !path.endsWith("/") ? path : path + "/";
+        this.path = path.endsWith("/") ? path : path + "/";
     } 
 
     public List<String> listFiles() throws IOException {

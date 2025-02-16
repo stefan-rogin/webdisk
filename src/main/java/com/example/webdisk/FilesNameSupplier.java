@@ -30,4 +30,5 @@ public class FilesNameSupplier implements Supplier<String> {
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString();
     }
+
 }

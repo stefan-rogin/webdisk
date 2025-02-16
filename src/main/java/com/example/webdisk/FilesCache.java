@@ -1,5 +1,6 @@
 package com.example.webdisk;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -120,6 +121,19 @@ public class FilesCache {
         if (files.contains(fileName)) {
             files.remove(fileName);
         }
+    }
+
+
+    /**
+     * Checks if the given file name is valid.
+     * A valid file name contains only alphanumeric characters, hyphens, and underscores,
+     * and its length is between 1 and 64 characters inclusive.
+     *
+     * @param fileName the name of the file to be validated
+     * @return true if the file name is valid, false otherwise
+     */
+    public boolean isValid(String fileName) {
+        return fileName.matches("^[a-zA-Z0-9-_]{1,64}$");
     }
 
     /**
