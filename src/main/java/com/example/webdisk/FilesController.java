@@ -17,7 +17,7 @@ import com.example.webdisk.response.FilesPostFileResponse;
 import com.example.webdisk.response.FilesSizeResponse;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.concurrent.CompletableFuture;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,7 +38,6 @@ public class FilesController {
     public void initialize() {
         try {
             storage.listFiles().forEach(fileName -> cache.putFile(fileName));
-
         } catch (IOException e) {}
     }
 
@@ -48,31 +47,24 @@ public class FilesController {
     }
 
     @GetMapping("/{fileName}")
-    public ResponseEntity<InputStreamResource> getFileForFileName(
+    public CompletableFuture<ResponseEntity<InputStreamResource>> getFileForFileName(
             @PathVariable String fileName,
             HttpServletRequest request) {
 
-        if (!cache.containsFile(fileName)) {
-            return ResponseEntity.notFound().build();
-        }
+        return storage.getFileAsync(fileName)
+                .thenApply(fileStream -> {
+                    InputStreamResource resource = new InputStreamResource(fileStream);  
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
 
-        if ("HEAD".equals(request.getMethod())) {
-            return ResponseEntity.ok().build();
-        }
-
-        try {
-            InputStream fileStream = storage.getFile(fileName);
-            InputStreamResource resource = new InputStreamResource(fileStream);
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
-
-            return ResponseEntity.ok()
+                    return ResponseEntity.ok()
                     .headers(headers)
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .body(resource);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+                })
+                .exceptionally(e -> { 
+                    return ResponseEntity.internalServerError().build();
+                });
     }
 
     @PostMapping("/")
