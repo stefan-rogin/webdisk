@@ -1,8 +1,10 @@
 package com.example.webdisk;
 
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,13 +98,19 @@ public class FilesController {
     }
 
     @GetMapping("/{fileName}")
-    public ResponseEntity<InputStreamResource> getFileForFileName(@PathVariable String fileName,
+    public ResponseEntity<InputStreamResource> getFileForFileName(
+            @PathVariable String fileName,
             HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
 
         if (!cache.containsFile(fileName)) {
-            return ResponseEntity.status(404).build();
+            return ResponseEntity.notFound().build();
         }
+
+        if ("HEAD".equals(request.getMethod())) {
+            return ResponseEntity.ok().build();
+        }
+
         try {
             InputStream fileStream = storage.getFile(fileName);
             InputStreamResource resource = new InputStreamResource(fileStream);
@@ -114,7 +123,7 @@ public class FilesController {
                     .body(resource);
         } catch (Exception e) {
             logger.error(LOG_WEB_FORMAT + ": Unable to read file", request.getMethod(), request.getRequestURI(), e);
-            return ResponseEntity.status(500).build();
+            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -132,7 +141,8 @@ public class FilesController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<FilesPostFileResponse> postFile(@RequestBody MultipartFile content,
+    public ResponseEntity<FilesPostFileResponse> postFile(
+            @RequestBody MultipartFile content,
             HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
 
@@ -140,17 +150,72 @@ public class FilesController {
         try {
             storage.putFile(newFileName, content);
         } catch (IOException e) {
-            // TODO: cache.delete(fileName);
+            // Revert incomplete create
+            cache.deleteFile(newFileName);
             logger.error(LOG_WEB_FORMAT + ": Unable to post new file", request.getMethod(), request.getRequestURI(), e);
-            return ResponseEntity.status(500).build();
+            return ResponseEntity.internalServerError().build();
         }
         return ResponseEntity.ok(new FilesPostFileResponse(newFileName));
+    }
+
+    @PutMapping("/{fileName}")
+    public ResponseEntity<String> putFile(
+            @PathVariable String fileName,
+            @RequestBody MultipartFile content,
+            HttpServletRequest request
+    ) {
+        logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
+        
+        // Clean if necessary
+        if (cache.containsFile(fileName)) {
+            try {
+                cache.deleteFile(fileName);
+                storage.deleteFile(fileName);
+            } catch (NoSuchElementException e) {
+                return ResponseEntity.notFound().build();
+            } catch (IOException e) {
+                // Revert incomplete delete
+                cache.putFile(fileName);
+                return ResponseEntity.internalServerError().build();
+            }
+        }
+
+        try {
+            cache.putFile(fileName);
+            storage.putFile(fileName, content);
+        } catch (IOException e) {
+            // Revert incomplete create
+            cache.deleteFile(fileName);
+            logger.error(LOG_WEB_FORMAT + ": Unable to post new file", request.getMethod(), request.getRequestURI(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+
+        return ResponseEntity.ok("");
     }
 
     @GetMapping("/restricted")
     public ResponseEntity<String> getFilesRestricted(HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
         return ResponseEntity.ok("Authorized");
+    }
+
+    @DeleteMapping("/{fileName}") 
+    public ResponseEntity<String> deleteFile(@PathVariable String fileName, HttpServletRequest request) {
+        logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI() + request.getQueryString());
+        
+        if (!cache.containsFile(fileName)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        cache.deleteFile(fileName);
+        try {
+            storage.deleteFile(fileName);
+        } catch (IOException e) {
+            // Revert incomplete delete
+            cache.putFile(fileName);
+            return ResponseEntity.internalServerError().build();
+        }
+        return ResponseEntity.ok("");
     }
 
 }

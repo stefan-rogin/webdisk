@@ -17,8 +17,13 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class FilesAccess {
 
-    @Value("${webdisk.path}")
     private String path;
+
+    @Value("${webdisk.path}")
+    public void setPath(String path) {
+        // Sanitize configured path
+        this.path = !path.endsWith("/") ? path : path + "/";
+    } 
 
     public List<String> listFiles() throws IOException {
         try (Stream<Path> stream = Files.list(Paths.get(path))) {
@@ -31,15 +36,23 @@ public class FilesAccess {
     }
 
     public InputStream getFile(String fileName) throws IOException {
-        return Files.newInputStream(Paths.get(path + "/" + fileName)); 
+        return Files.newInputStream(getPathForFileName(fileName)); 
     }
 
     public void putFile(String fileName, MultipartFile content) throws IOException {
-        Files.copy(content.getInputStream(), Paths.get(path + "/" + fileName));
+        Files.copy(content.getInputStream(), getPathForFileName(fileName));
+    }
+
+    public void deleteFile(String fileName) throws IOException {
+        Files.delete(getPathForFileName(fileName));
     }
 
     public String getPath() {
         return path;
+    }
+
+    private Path getPathForFileName(String fileName) {
+        return Paths.get(path + fileName);
     }
 
 }

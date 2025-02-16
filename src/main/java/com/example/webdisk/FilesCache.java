@@ -1,38 +1,110 @@
 package com.example.webdisk;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 
+/**
+ * Service class for managing a cache of file names.
+ * <p>
+ * This class provides methods to add, check, generate, find, and delete file names in the cache.
+ * It ensures that each file name in the cache is unique.
+ * </p>
+ * <p>
+ * The cache is implemented using a {@link HashSet} to store the file names.
+ * </p>
+ * <p>
+ * Methods provided:
+ * <ul>
+ *   <li>{@link #containsFile(String)} - Checks if a file name is present in the cache.</li>
+ *   <li>{@link #putFile(String)} - Adds a file name to the cache.</li>
+ *   <li>{@link #newFile()} - Generates a new unique file name and adds it to the cache.</li>
+ *   <li>{@link #findFilesForPattern(String)} - Finds file names that match a given pattern.</li>
+ *   <li>{@link #deleteFile(String)} - Deletes a file name from the cache.</li>
+ *   <li>{@link #getSize()} - Returns the number of file names in the cache.</li>
+ * </ul>
+ * </p>
+ * <p>
+ * Example usage:
+ * <pre>
+ * {@code
+ * FilesCache filesCache = new FilesCache();
+ * filesCache.putFile("example.txt");
+ * boolean exists = filesCache.containsFile("example.txt");
+ * String newFileName = filesCache.newFile();
+ * String[] matchingFiles = filesCache.findFilesForPattern(".*\\.txt");
+ * filesCache.deleteFile("example.txt");
+ * int size = filesCache.getSize();
+ * }
+ * </pre>
+ * </p>
+ */
 @Service
 public class FilesCache {
 
+    /**
+     * A set that holds the names of the files in the cache.
+     * This set ensures that each file name is unique within the cache.
+     */
     private final Set<String> files = new HashSet<>();
 
+
+    /**
+     * Checks if the cache contains a file with the specified name.
+     *
+     * @param fileName the name of the file to check for
+     * @return true if the file is present in the cache, false otherwise
+     */
     public boolean containsFile(String fileName) {
         return files.contains(fileName);
     }
 
-    public void putFile(String fileName) {
-        files.add(fileName);
+
+    /**
+     * Adds the specified file name to the cache.
+     *
+     * @param fileName the name of the file to be added to the cache
+     * @return {@code true} if the file was successfully added to the cache,
+     *         {@code false} otherwise
+     */
+    public boolean putFile(String fileName) {
+        return files.add(fileName);
     }
 
+    /**
+     * Generates a new unique file name that does not already exist in the cache,
+     * adds it to the cache, and returns the new file name.
+     *
+     * @return the newly generated unique file name
+     */
     public String newFile() {
-        String newFileName = Stream.generate(new FilesNameSupplier())
+        final int MAX_ATTEMPTS = 100;
+
+        Optional<String> newFileName = Stream.generate(new FilesNameSupplier())
+                .limit(MAX_ATTEMPTS)
                 .filter(fileName -> !files.contains(fileName))
                 .limit(1)
-                .collect(Collectors.joining());
-        putFile(newFileName);
-        return newFileName;
+                .findFirst();
+        putFile(newFileName.orElseThrow(() -> new RuntimeException("Unable to generate a unique cache key")));
+        return newFileName.get();
     }
 
+    /**
+     * Finds and returns an array of file names that match the given pattern.
+     * <p>
+     * This method uses regular expressions to match the file names against the provided pattern.
+     * Note that the pattern matching is case-sensitive.
+     * 
+     * @param pattern the regular expression pattern to match file names against
+     * @return an array of file names that match the given pattern
+     */
     public String[] findFilesForPattern(String pattern) {
-        Pattern regexpPattern = Pattern.compile(pattern); // TODO: Mention case sensitive in docs
+        Pattern regexpPattern = Pattern.compile(pattern);
         return files.stream()
                 .filter(file -> {
                     Matcher matcher = regexpPattern.matcher(file);
@@ -41,6 +113,24 @@ public class FilesCache {
                 .toArray(String[]::new);
     }
 
+    /**
+     * Deletes a file from the cache.
+     * 
+     * @param fileName the name of the file to be deleted
+     * @throws ElementNotFoundException if the file is not found in the cache
+     * @throws IOException if an I/O error occurs during deletion
+     */
+    public void deleteFile(String fileName) {
+        if (files.contains(fileName)) {
+            files.remove(fileName);
+        }
+    }
+
+    /**
+     * Returns the number of files in the cache.
+     *
+     * @return the size of the files cache
+     */
     public int getSize() {
         return files.size();
     }
