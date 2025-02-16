@@ -6,7 +6,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.4.2</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <groupId>com.example</groupId>
     <artifactId>webdisk</artifactId>
@@ -99,27 +99,7 @@
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>5.0.0.4389</version>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.11.2</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>javadoc</goal>
-                        </goals>
-                        <phase>package</phase>
-                    </execution>
-                </executions>
-                <configuration>
-                    <source>1.17</source>
-                    <outputDirectory>${project.build.directory}/classes/public/</outputDirectory>
-                    <show>protected</show>
-                    <failOnError>false</failOnError>
-                    <failOnWarning>false</failOnWarning>
-                    <quiet>true</quiet>
-                </configuration>
-            </plugin>
+
         </plugins>
     </build>
 
