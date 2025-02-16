@@ -66,12 +66,12 @@ public class FilesController {
             storage.listFiles().forEach(fileName -> cache.putFile(fileName));
             Instant end = Instant.now();
 
-            logger.info("Cache initialized, took {}", Duration.between(start, end));
-            logger.info("Cache size: {}", cache.getSize());
+            logger.info("Cache initialized, took @CacheInit:{} ms", Duration.between(start, end).toMillis());
+            logger.info("Cache size @CacheSize:{}", cache.getSize());
         } catch (IOException e) {
             // The app will start with an empty cache if the storage location is
             // unaccessible
-            logger.error("Unable to read from storage location", e.getMessage());
+            logger.error("Unable to read from storage location: {}", storage.getPath(), e.getMessage());
         }
     }
 
@@ -122,7 +122,13 @@ public class FilesController {
     public ResponseEntity<FilesSearchResponse> getFilesSearch(@RequestParam String pattern,
             HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
-        return ResponseEntity.ok(new FilesSearchResponse(cache.findFilesForPattern(pattern)));
+        
+        Instant start = Instant.now();
+        String[] results = cache.findFilesForPattern(pattern);
+        Instant end = Instant.now();
+        
+        logger.info("Search for {} took @Search:{} ms", pattern, Duration.between(start, end).toMillis());        
+        return ResponseEntity.ok(new FilesSearchResponse(results));
     }
 
     @PostMapping("/")
