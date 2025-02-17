@@ -40,7 +40,7 @@ public class FilesAccessTest {
 
     @BeforeEach
     public void setup() {
-        filesAccess.setPath("/mock");
+        filesAccess.setPath("/sample");
     }
 
     @Test
@@ -49,7 +49,7 @@ public class FilesAccessTest {
         Path andone = mock(Path.class);   // Valid
         Path not1 = mock(Path.class);     // Not valid
         Path twodots = mock(Path.class);  // Not valid
-        Stream<Path> pathStream = Stream.of(one, andone);
+        Stream<Path> pathStream = Stream.of(one, andone, not1, twodots);
 
         when(Files.list(any(Path.class))).thenReturn(pathStream);
         when(one.getFileName()).thenReturn(Path.of("one"));
