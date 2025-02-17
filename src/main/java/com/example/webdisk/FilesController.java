@@ -42,22 +42,19 @@ import jakarta.servlet.http.HttpServletRequest;
 /**
  * The FilesController class handles HTTP requests related to file operations
  * such as retrieving file size, fetching files, searching files, uploading new
- * files,
- * updating existing files, and deleting files. It uses a cache to store file
- * metadata
- * and a storage service to perform actual file operations.
+ * files, updating existing files, and deleting files. It uses a cache to store file
+ * metadata and a storage service to perform actual file operations.
  * 
  * The controller provides the following endpoints:
  * <ul>
- * <li>GET /files/size - Returns the total number of files stored by the
- * application.</li>
  * <li>GET /files/{fileName} - Retrieves a file by its name.</li>
  * <li>HEAD /files/{fileName} - Check if a file exists, whitout getting its content.</li>
- * <li>GET /files/search - Searches for files matching a given pattern.</li>
  * <li>POST /files/ - Uploads a new file.</li>
  * <li>PUT /files/{fileName} - Updates an existing file.</li>
- * <li>GET /files/restricted - Returns a restricted access message.</li>
  * <li>DELETE /files/{fileName} - Deletes a file by its name.</li>
+ * <li>GET /files/search - Searches for files matching a given pattern.</li>
+ * <li>GET /files/size - Returns the total number of files stored by the application.</li>
+ * <li>GET /files/restricted - Demo endpoint for security implementation.</li>
  * </ul>
  * 
  * The controller uses the following dependencies:
@@ -81,7 +78,7 @@ public class FilesController {
     private FilesAccess storage;
 
     private static final Logger logger = LoggerFactory.getLogger(FilesController.class);
-    private static final String LOG_WEB_FORMAT = "{} {}";
+    private static final String LOG_WEB_FORMAT = "@Requst:{} {}";
 
     /**
      * Constructs a new FilesController with the specified cache and storage.
@@ -95,29 +92,15 @@ public class FilesController {
     }
 
     /**
-     * Initializes the FilesController after its construction.
-     * This method is annotated with @PostConstruct, indicating that it should be
-     * called once all dependency injections are done to perform any initialization.
+     * Initializes the FilesController after its construction by reading file names from the 
+     * storage and adding them to the cache.
      */
     @PostConstruct
     public void initialize() {
-        // TODO: skip when testing
-        initCache();
-    }
-
-    /**
-     * Initializes the cache by reading file names from the storage and adding them
-     * to the cache.
-     * If the storage location is inaccessible, logs an error and starts with an
-     * empty cache.
-     *
-     * @throws IOException if an I/O error occurs while reading from the storage
-     *                     location
-     */
-    protected void initCache() {
         try {
             logger.info("Initializing cache from path: {}", storage.getPath());
-
+            
+            // Reading the entire cache is intensive and should be part of telemetry
             Instant start = Instant.now();
             storage.listFiles().forEach(fileName -> cache.putFile(fileName));
             Instant end = Instant.now();
@@ -126,25 +109,23 @@ public class FilesController {
                     Duration.between(start, end).toMillis());
             logger.info("Cache size @CacheSize:{}", cache.getSize());
         } catch (IOException e) {
-            // The app will start with an empty cache if the storage location is
-            // inaccessible
-            logger.error("Unable to read from storage location: {}",
+            // The app will not start if the storage location is inaccessible
+            logger.error("Unable to read from storage location: {}. @Cause:{}",
                     storage.getPath(), e.getMessage());
+            throw new RuntimeException("Storage inaccessible, stopping.");
         }
     }
 
     /**
-     * Handles the HTTP GET request to obtain the size of cached files.
+     * Handles the HTTP GET request to obtain the size of storage in number of files.
      * <p>
-     * This method logs the incoming request method and URI, and returns the size of
-     * the
-     * cached files encapsulated in a {@link FilesSizeResponse} object.
+     * Returns the number of files encapsulated in a {@link FilesSizeResponse} object.
      * </p>
      *
      * @param request the {@link HttpServletRequest} object that contains the
      *                request the client has made to the servlet
      * @return a {@link ResponseEntity} containing the {@link FilesSizeResponse}
-     *         with the size of the cached files
+     *         with the number of files
      */
     @Operation(summary = "Storage size", description = "Returns the total number of files stored by the application")
     @ApiResponses(@ApiResponse(responseCode = "200", content = {
@@ -161,16 +142,17 @@ public class FilesController {
      *
      * @param fileName the name of the file to retrieve
      * @param request  the HttpServletRequest object containing the request details
-     * @return a ResponseEntity containing the file as an InputStreamResource if
-     *         found,
+     * @return a ResponseEntity containing the file as an InputStreamResource if found,
      *         or a 404 Not Found status if the file does not exist in the cache,
-     *         or a 500 Internal Server Error status if an error occurs while
-     *         reading the file
+     *         or a 500 Internal Server Error status if an error occurs while reading the file
      */
     @Operation(summary = "Download file", description = "Retrieve a stored file, identified by its name")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "File download stream for GET, no content for HEAD"),
-            @ApiResponse(responseCode = "404", description = "Not Found status if the file does not exist in the cache")
+            @ApiResponse(responseCode = "200", 
+                description = "File download stream for GET as attachemnt, no content for HEAD",
+                content={ @Content(schema = @Schema(implementation = Void.class)) }),
+            @ApiResponse(responseCode = "404", description = "Not Found status if the file does not exist in the cache",
+                content={ @Content(schema = @Schema(implementation = Void.class)) })
     })
     @GetMapping("/{fileName}")
     public ResponseEntity<InputStreamResource> getFileForFileName(
@@ -197,61 +179,39 @@ public class FilesController {
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .body(resource);
         } catch (Exception e) {
-            logger.error(LOG_WEB_FORMAT + ": Unable to read file, {}",
-                    request.getMethod(), request.getRequestURI(), e.getMessage());
+            logger.error(LOG_WEB_FORMAT + ": Unable to read file {}. @Cause:{}",
+                    request.getMethod(), request.getRequestURI(), fileName, e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    /**
-     * Handles GET requests to search for files matching a given pattern.
-     *
-     * @param pattern the search pattern to match files against
-     * @param request the HttpServletRequest object containing the request details
-     * @return a ResponseEntity containing a FilesSearchResponse with the search
-     *         results
-     */
-    @Operation(summary = "Search files", description = "Use a Regexp pattern to search for files")
-    @ApiResponses(@ApiResponse(responseCode = "200", content = {
-            @Content(schema = @Schema(implementation = FilesSearchResponse.class), mediaType = "application/json") }))
-    @GetMapping("/search")
-    public ResponseEntity<FilesSearchResponse> getFilesSearch(@RequestParam String pattern,
-            HttpServletRequest request) {
-        logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI() + request.getQueryString());
-
-        Instant start = Instant.now();
-        String[] results = cache.findFilesForPattern(pattern);
-        Instant end = Instant.now();
-
-        logger.info("Search for {} took @Search:{} ms", pattern, Duration.between(start, end).toMillis());
-        return ResponseEntity.ok(new FilesSearchResponse(results));
-    }
-
+    
     /**
      * Handles the HTTP POST request to upload a new file.
      *
-     * @param content the file content to be uploaded
+     * @param file the file content to be uploaded
      * @param request the HTTP servlet request
-     * @return a ResponseEntity containing the response with the new file name or an
-     *         error status
+     * @return a ResponseEntity containing the response with the new file name
+     * @throws IOException if an I/O error occurs during file upload
      */
     @Operation(summary = "Add new file", description = "Upload a file for the first time")
     @ApiResponses(@ApiResponse(responseCode = "200", content = {
-            @Content(schema = @Schema(implementation = FilesPostFileResponse.class), mediaType = "application/json")
+            @Content(schema = @Schema(implementation = FilesPostFileResponse.class), 
+            mediaType = "application/json")
     }))
-    @PostMapping("/")
+    @PostMapping("/upload")
     public ResponseEntity<FilesPostFileResponse> postFile(
-            @RequestBody MultipartFile content,
+            @RequestParam MultipartFile file,
             HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
 
         String newFileName = cache.newFile();
         try {
-            storage.putFile(newFileName, content);
+            storage.putFile(newFileName, file);
         } catch (IOException e) {
             // Revert incomplete create
             cache.deleteFile(newFileName);
-            logger.error(LOG_WEB_FORMAT + ": Unable to post new file, {}",
+            logger.error(LOG_WEB_FORMAT + ": Unable to post new file. @Cause:{}",
                     request.getMethod(), request.getRequestURI(), e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
@@ -354,9 +314,34 @@ public class FilesController {
         return ResponseEntity.ok("");
     }
 
+
+    /**
+     * Handles GET requests to search for files matching a given pattern.
+     *
+     * @param pattern the search pattern to match files against
+     * @param request the HttpServletRequest object containing the request details
+     * @return a ResponseEntity containing a FilesSearchResponse with the search
+     *         results
+     */
+    @Operation(summary = "Search files", description = "Use a Regexp pattern to search for files")
+    @ApiResponses(@ApiResponse(responseCode = "200", content = {
+            @Content(schema = @Schema(implementation = FilesSearchResponse.class), mediaType = "application/json") }))
+    @GetMapping("/search")
+    public ResponseEntity<FilesSearchResponse> getFilesSearch(@RequestParam String pattern,
+            HttpServletRequest request) {
+        logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI() + request.getQueryString());
+
+        Instant start = Instant.now();
+        String[] results = cache.findFilesForPattern(pattern);
+        Instant end = Instant.now();
+
+        logger.info("Search for {} took @Search:{} ms", pattern, Duration.between(start, end).toMillis());
+        return ResponseEntity.ok(new FilesSearchResponse(results));
+    }
+
     /**
      * Handles GET requests to the /restricted endpoint.
-     * Demo endpoint for basic implementation of security. For granting access,
+     * Demo endpoint for basic implementation of security, with preauthentication. For granting access,
      * the presence of Authorization header is required, with a Bearer token of any value.
      * Its validity with the authentication system is out of scope and was mocked.
      * 
