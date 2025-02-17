@@ -2,11 +2,12 @@ package com.example.webdisk;
 
 import java.io.IOException;
 import java.io.InputStream;
-
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -40,7 +41,7 @@ public class FilesAccess {
     }
 
     public void putFile(String fileName, MultipartFile content) throws IOException {
-        Files.copy(content.getInputStream(), getPathForFileName(fileName));
+        Files.copy(content.getInputStream(), getPathForFileName(fileName), StandardCopyOption.REPLACE_EXISTING);
     }
 
     public void deleteFile(String fileName) throws IOException {
