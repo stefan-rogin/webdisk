@@ -36,6 +36,8 @@ import org.slf4j.LoggerFactory;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.annotation.RequestMethod;
+
 
 /**
  * The FilesController class handles HTTP requests related to file operations
@@ -43,7 +45,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * files, updating existing files, and deleting files. It uses a cache to store file
  * metadata and a storage service to perform actual file operations.
  * 
- * The controller provides the following endpoints:
+ * <p>The controller provides the following endpoints:</p>
  * <ul>
  * <li>GET /files/{fileName} - Retrieves a file by its name.</li>
  * <li>HEAD /files/{fileName} - Check if a file exists, whitout getting its content.</li>
@@ -55,17 +57,15 @@ import jakarta.servlet.http.HttpServletRequest;
  * <li>GET /files/restricted - Demo endpoint for security implementation.</li>
  * </ul>
  * 
- * The controller uses the following dependencies:
+ * <p>The controller uses the following dependencies:</p>
  * <ul>
  * <li>FilesCache - A cache for storing file metadata.</li>
  * <li>FilesAccess - A service for performing file operations.</li>
  * <li>Logger - For logging operations and errors.</li>
  * </ul>
  * 
- * <p>
- * The controller initializes the cache with existing filenames from storage
- * when the application starts.
- * </p>
+ * <p>The controller initializes the cache with existing filenames from storage
+ * when the application starts.</p>
  */
 @RestController
 @RequestMapping("/files")
@@ -116,14 +116,15 @@ public class FilesController {
 
     /**
      * Handles the HTTP GET request to obtain the size of storage in number of files.
-     * <p>
-     * Returns the number of files encapsulated in a {@link FilesSizeResponse} object.
-     * </p>
+     * 
+     * <p>Returns the number of files encapsulated in a {@link FilesSizeResponse} object.</p>
+     * 
      * <pre>
      * curl -X GET http://localhost:8080/files/size -H "accept: application/json"
      * 
      * {"size":7}
      * </pre>
+     * 
      * @param request the {@link HttpServletRequest} object that contains the
      *                request the client has made to the servlet
      * @return a {@link ResponseEntity} containing the {@link FilesSizeResponse}
@@ -140,10 +141,13 @@ public class FilesController {
     }
 
     /**
-     * Handles HTTP GET and HEAD requests to retrieve a file by its name.
+     * Handles HTTP GET and HEAD requests to retrieve a file by its name. The operation is run
+     * async, using a resizable thread pool. It can be time intensive, depending on download size etc.
+     * 
      * <pre>
      * curl -O -X GET http://localhost:8080/files/one
      * </pre>
+     * 
      * @param fileName the name of the file to retrieve
      * @param request  the HttpServletRequest object containing the request details
      * @return a ResponseEntity containing the file as an InputStreamResource if found,
@@ -163,7 +167,6 @@ public class FilesController {
             @PathVariable String fileName,
             HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
-        Instant start = Instant.now();
 
         if (!cache.containsFile(fileName)) {
             return CompletableFuture.completedFuture(ResponseEntity.notFound().build());
@@ -178,9 +181,6 @@ public class FilesController {
                     InputStreamResource resource = new InputStreamResource(fileStream);
                     HttpHeaders headers = new HttpHeaders();
                     headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
-                    Instant end = Instant.now();
-                    logger.info(">>>>>>>>> Download:{} ms",
-                    Duration.between(start, end).toMillis());
                     return ResponseEntity.ok()
                             .headers(headers)
                             .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -194,7 +194,9 @@ public class FilesController {
     }
     
     /**
-     * Handles the HTTP POST request to upload a new file.
+     * Handles the HTTP POST request to upload a new file. The operation is run
+     * async, using a resizable thread pool. It can be time intensive, depending on download size etc.
+     * 
      * <pre>
      * curl -X POST -H "Content-Type: multipart/form-data" -F "file=@./oneup" http://localhost:8080/files/upload
      * 
@@ -204,7 +206,6 @@ public class FilesController {
      * @param file the file content to be uploaded
      * @param request the HTTP servlet request
      * @return a ResponseEntity containing the response with the new file name
-     * @throws IOException if an I/O error occurs during file upload
      */
     @Operation(summary = "Add new file", description = "Upload a file for the first time")
     @ApiResponses(@ApiResponse(responseCode = "200", content = {
@@ -212,29 +213,30 @@ public class FilesController {
             mediaType = "application/json")
     }))
     @PostMapping("/upload")
-    public ResponseEntity<FilesPostFileResponse> postFile(
+    public CompletableFuture<ResponseEntity<FilesPostFileResponse>> postFile(
             @RequestParam MultipartFile file,
             HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
 
         String newFileName = cache.newFile();
-        try {
-            storage.putFile(newFileName, file);
-        } catch (IOException e) {
-            // Revert incomplete create
-            cache.deleteFile(newFileName);
-            logger.error(LOG_WEB_FORMAT + ": Unable to post new file. @Cause:{}",
-                    request.getMethod(), request.getRequestURI(), e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
-        return ResponseEntity.ok(new FilesPostFileResponse(newFileName));
+
+        return storage.putFileAsync(newFileName, file)
+                .thenApply(voidResult -> ResponseEntity.ok(new FilesPostFileResponse(newFileName)))
+                .exceptionally(e -> {
+                    // Revert incomplete create
+                    cache.deleteFile(newFileName);
+                    logger.error(LOG_WEB_FORMAT + ": Unable to post new file. @Cause:{}",
+                            request.getMethod(), request.getRequestURI(), e.getMessage());
+                    return ResponseEntity.internalServerError().build();
+                });
     }
 
     /**
      * Handles the upload or update of a file. If the file already exists, its content will be replaced.
+     * 
      * <pre>
      * curl -X PUT -H "Content-Type: multipart/form-data" -F "file=@./oneup" http://localhost:8080/files/oneup
-     * </pre
+     * </pre>
      * 
      * @param fileName the name of the file to be uploaded or updated
      * @param file the content of the file to be uploaded
@@ -252,7 +254,7 @@ public class FilesController {
         @ApiResponse(responseCode = "400", description = "Bad Request if the filename is invalid"),
     })
     @PutMapping("/{fileName}")
-    public ResponseEntity<String> putFile(
+    public CompletableFuture<ResponseEntity<String>> putFile(
             @PathVariable String fileName,
             @RequestParam MultipartFile file,
             HttpServletRequest request) {
@@ -260,26 +262,28 @@ public class FilesController {
 
         // Verify name before accepting operation
         if (!cache.isValid(fileName)) {
-            return ResponseEntity.status(400).body("Invalid filename");
+            return CompletableFuture.completedFuture(
+                ResponseEntity.badRequest().body("Invalid filename"));
         }
 
-        try {
-            // FilesAccess.putFile() does replace existing content, if any
-            storage.putFile(fileName, file);
-            // New file
-            if (!cache.containsFile(fileName)) {
-                cache.putFile(fileName);
-            }
-        } catch (IOException e) {
-            logger.error(LOG_WEB_FORMAT + ": Unable to put file. @Cause:{}", 
+        return storage.putFileAsync(fileName, file)
+            .thenApply(voidResult -> {
+                // New file
+                if (!cache.containsFile(fileName)) {
+                    cache.putFile(fileName);
+                }
+                return ResponseEntity.ok("");
+            })
+            .exceptionally(e -> {
+                logger.error(LOG_WEB_FORMAT + ": Unable to put file. @Cause:{}", 
                     request.getMethod(), request.getRequestURI(), e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
-        return ResponseEntity.ok("");
+                return ResponseEntity.internalServerError().build();
+            });
     }
 
     /**
      * Deletes a file with the given file name.
+     * 
      * <pre>
      * curl -X DELETE http://localhost:8080/files/two
      * </pre>
@@ -317,17 +321,18 @@ public class FilesController {
     }
 
     /**
-     * Handles GET requests to search for files matching a given pattern.
+     * Handles GET requests to search for files matching a given pattern. 
+     * This operation is not run async, given the nature of the cache.
+     * 
      * <pre>
      * curl -X GET http://localhost:8080/files/search?pattern=one
      * 
      * {"results":["one","andone"]}
-     * </pre
+     * </pre>
      * 
      * @param pattern the search pattern to match files against
      * @param request the HttpServletRequest object containing the request details
-     * @return a ResponseEntity containing a FilesSearchResponse with the search
-     *         results
+     * @return a ResponseEntity containing a FilesSearchResponse with the search results
      */
     @Operation(summary = "Search files", description = "Use a Regexp pattern to search for files")
     @ApiResponses(
@@ -354,6 +359,7 @@ public class FilesController {
      * Demo endpoint for basic implementation of security, with preauthentication. For granting access,
      * the presence of Authorization header is required, with a Bearer token of any value.
      * Its validity with the authentication system is out of scope and was mocked.
+     * 
      * <pre>
      * curl -X GET http://localhost:8080/files/restricted -H "Authorization: Bearer any_token"
      * 

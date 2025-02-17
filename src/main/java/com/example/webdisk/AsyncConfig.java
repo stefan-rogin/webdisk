@@ -8,6 +8,17 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
 
+/**
+ * Configuration class for setting up asynchronous processing in the application.
+ * This class defines a thread pool task executor with configurable core pool size,
+ * maximum pool size, and queue capacity.
+ * 
+ * <p>Annotations:</p>
+ * <ul>
+ *   <li>{@link Configuration}: Indicates that this class declares one or more {@link Bean} methods.</li>
+ *   <li>{@link EnableAsync}: Enables Spring's asynchronous method execution capability.</li>
+ * </ul>
+ */
 @Configuration
 @EnableAsync
 public class AsyncConfig {
@@ -21,6 +32,15 @@ public class AsyncConfig {
     @Value("${webdisk.thread-queue:30}")
     private int THREAD_QUEUE;
 
+    /**
+     * Configures and provides a ThreadPoolTaskExecutor bean.
+     * 
+     * This executor is used to manage asynchronous tasks in the application.
+     * It sets the core pool size, maximum pool size, and queue capacity for the thread pool.
+     * The threads created by this executor will have the prefix "WebDiskThread-".
+     * 
+     * @return an Executor configured with the specified thread pool settings.
+     */
     @Bean(name = "taskExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

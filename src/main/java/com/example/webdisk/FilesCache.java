@@ -12,13 +12,12 @@ import org.springframework.stereotype.Service;
 
 /**
  * Service class for managing a cache of file names.
- * <p>
- * This class provides methods to add, check, generate, find, and delete file names in the cache.
- * It ensures that each file name in the cache is unique.
- * </p>
- * <p>
- * The cache is implemented using a {@link HashSet} to store the file names.
- * </p>
+ * 
+ * <p>This class provides methods to add, check, generate, find, and delete file names in the cache.
+ * It ensures that each file name in the cache is unique.</p>
+ * 
+ * <p>The cache is implemented using a {@link HashSet} to store the file names.</p>
+ * 
  * Methods provided:
  * <ul>
  *   <li>{@link #containsFile(String)} - Checks if a file name is present in the cache.</li>
@@ -28,7 +27,8 @@ import org.springframework.stereotype.Service;
  *   <li>{@link #deleteFile(String)} - Deletes a file name from the cache.</li>
  *   <li>{@link #getSize()} - Returns the number of file names in the cache.</li>
  * </ul>
- * Example usage:
+ * 
+ * <p>Example usage:</p>
  * <pre>
  * {@code
  * FilesCache filesCache = new FilesCache();
@@ -93,9 +93,6 @@ public class FilesCache {
 
     /**
      * Finds and returns an array of file names that match the given pattern.
-     * <p>
-     * This method uses regular expressions to match the file names against the provided pattern.
-     * Note that the pattern matching is case-sensitive.
      * 
      * @param pattern the regular expression pattern to match file names against
      * @return an array of file names that match the given pattern
@@ -114,8 +111,6 @@ public class FilesCache {
      * Deletes a file from the cache.
      * 
      * @param fileName the name of the file to be deleted
-     * @throws ElementNotFoundException if the file is not found in the cache
-     * @throws IOException if an I/O error occurs during deletion
      */
     public void deleteFile(String fileName) {
         if (files.contains(fileName)) {
