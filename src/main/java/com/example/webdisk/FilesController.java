@@ -23,7 +23,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.io.IOException;
@@ -130,9 +129,9 @@ public class FilesController {
      *         with the number of files
      */
     @Operation(summary = "Storage size", description = "Returns the total number of files stored by the application")
-    @ApiResponses(@ApiResponse(responseCode = "200", content = {
-            @Content(schema = @Schema(implementation = FilesSizeResponse.class), mediaType = "application/json")
-    }))
+    @ApiResponse(responseCode = "200", content = {
+            @Content(schema = @Schema(implementation = FilesSizeResponse.class), mediaType = "application/json")})
+
     @GetMapping("/size")
     public ResponseEntity<FilesSizeResponse> getFilesSize(HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
@@ -154,13 +153,11 @@ public class FilesController {
      *         or a 500 Internal Server Error status if an error occurs while reading the file
      */
     @Operation(summary = "Download file", description = "Retrieve a stored file, identified by its name")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", 
-                description = "File download stream for GET as attachemnt, no content for HEAD",
-                content={ @Content(schema = @Schema(implementation = Void.class)) }),
-            @ApiResponse(responseCode = "404", description = "Not Found status if the file does not exist in the cache",
+    @ApiResponse(responseCode = "200", description = "File download stream for GET as attachemnt, no content for HEAD",
                 content={ @Content(schema = @Schema(implementation = Void.class)) })
-    })
+    @ApiResponse(responseCode = "404", description = "Not Found status if the file does not exist in the cache",
+                content={ @Content(schema = @Schema(implementation = Void.class)) })
+
     @GetMapping("/{fileName}")
     public CompletableFuture<ResponseEntity<InputStreamResource>> getFileForFileName(
             @PathVariable String fileName,
@@ -188,7 +185,7 @@ public class FilesController {
                 .exceptionally(e -> {
                     // Repair cache if files were removed offline
                     Throwable root = e.getCause().getCause();
-                    if (root != null && root instanceof NoSuchFileException) {
+                    if (root instanceof NoSuchFileException) {
                         cache.deleteFile(fileName);
                     }
                     logger.error(LOG_WEB_FORMAT + ": Unable to read file {}. @Cause:{}",
@@ -212,10 +209,9 @@ public class FilesController {
      * @return a ResponseEntity containing the response with the new file name
      */
     @Operation(summary = "Add new file", description = "Upload a file for the first time")
-    @ApiResponses(@ApiResponse(responseCode = "200", content = {
-            @Content(schema = @Schema(implementation = FilesPostFileResponse.class), 
-            mediaType = "application/json")
-    }))
+    @ApiResponse(responseCode = "200", content = {
+            @Content(schema = @Schema(implementation = FilesPostFileResponse.class), mediaType = "application/json")})
+
     @PostMapping("/upload")
     public CompletableFuture<ResponseEntity<FilesPostFileResponse>> postFile(
             @RequestParam MultipartFile file,
@@ -250,13 +246,11 @@ public class FilesController {
      *         - 400 Bad Request if the filename is invalid
      *         - 500 Internal Server Error if an error occurs during the file operation
      */
-    @Operation(summary = "Upload or update", 
-        description = "Upload a file, replacing current content if it already exists")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "OK if the file is successfully uploaded or updated",
-            content={ @Content(schema = @Schema(implementation = Void.class)) }),
-        @ApiResponse(responseCode = "400", description = "Bad Request if the filename is invalid"),
-    })
+    @Operation(summary = "Upload or update", description = "Upload a file, replacing current content if it already exists")
+    @ApiResponse(responseCode = "200", description = "OK if the file is successfully uploaded or updated",
+            content={ @Content(schema = @Schema(implementation = Void.class)) })
+    @ApiResponse(responseCode = "400", description = "Bad Request if the filename is invalid")
+
     @PutMapping("/{fileName}")
     public CompletableFuture<ResponseEntity<String>> putFile(
             @PathVariable String fileName,
@@ -299,10 +293,9 @@ public class FilesController {
      *         or status 500 (Internal Server Error) if an error occurred during deletion
      */
     @Operation(summary = "Delete file", description = "Deletes a file with the given file name.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "File deleted"),
-        @ApiResponse(responseCode = "404", description = "File not found")
-    })
+    @ApiResponse(responseCode = "200", description = "File deleted")
+    @ApiResponse(responseCode = "404", description = "File not found")
+
     @DeleteMapping("/{fileName}")
     public ResponseEntity<String> deleteFile(@PathVariable String fileName, HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
@@ -339,10 +332,9 @@ public class FilesController {
      * @return a ResponseEntity containing a FilesSearchResponse with the search results
      */
     @Operation(summary = "Search files", description = "Use a Regexp pattern to search for files")
-    @ApiResponses(
-        @ApiResponse(responseCode = "200", content = {
-            @Content(schema = @Schema(implementation = FilesSearchResponse.class), mediaType = "application/json") 
-    }))
+    @ApiResponse(responseCode = "200", content = {
+            @Content(schema = @Schema(implementation = FilesSearchResponse.class), mediaType = "application/json")})
+
     @GetMapping("/search")
     public ResponseEntity<FilesSearchResponse> getFilesSearch(@RequestParam String pattern,
             HttpServletRequest request) {
@@ -373,13 +365,10 @@ public class FilesController {
      * @param request the HttpServletRequest object containing the request details
      * @return a ResponseEntity with a message indicating authorization
      */
-    @Operation(summary = "Get restricted resource", 
-            description = "Demo endpoint for basic implementation of security.")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Authorized", 
-                content = @Content(examples = @ExampleObject(value = "Authorized"))),
-        @ApiResponse(responseCode = "403", description = "Unauthorized", content = @Content)
-    })
+    @Operation(summary = "Get restricted resource", description = "Demo endpoint for basic implementation of security.")
+    @ApiResponse(responseCode = "200", description = "Authorized", 
+                content = @Content(examples = @ExampleObject(value = "Authorized")))
+    @ApiResponse(responseCode = "403", description = "Unauthorized", content = @Content)
     @GetMapping("/restricted")
     public ResponseEntity<String> getFilesRestricted(HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
