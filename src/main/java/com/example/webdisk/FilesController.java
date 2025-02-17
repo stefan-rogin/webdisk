@@ -36,8 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.RequestMethod;
-
 
 /**
  * The FilesController class handles HTTP requests related to file operations
