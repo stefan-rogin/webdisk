@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
@@ -185,6 +186,11 @@ public class FilesController {
                             .body(resource);
                 })
                 .exceptionally(e -> {
+                    // Repair cache if files were removed offline
+                    Throwable root = e.getCause().getCause();
+                    if (root != null && root instanceof NoSuchFileException) {
+                        cache.deleteFile(fileName);
+                    }
                     logger.error(LOG_WEB_FORMAT + ": Unable to read file {}. @Cause:{}",
                         request.getMethod(), request.getRequestURI(), fileName, e.getMessage());
                     return ResponseEntity.internalServerError().build();
