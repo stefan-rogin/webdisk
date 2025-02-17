@@ -97,13 +97,12 @@ public class FilesAccess {
      */
     @Async("taskExecutor")
     public CompletableFuture<InputStream> getFileAsync(String fileName) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return Files.newInputStream(getPathForFileName(fileName));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        try {
+            InputStream inputStream = Files.newInputStream(getPathForFileName(fileName));
+            return CompletableFuture.completedFuture(inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

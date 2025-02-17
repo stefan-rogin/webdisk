@@ -7,7 +7,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 @SpringBootTest
 class FilesCacheTests {
 
@@ -45,8 +44,10 @@ class FilesCacheTests {
         cache.putFile("one");
         cache.putFile("andone");
         cache.putFile("two");
-        assertThat(cache.findFilesForPattern("one")).containsExactlyInAnyOrder(new String[]{"andone", "one"});    
-        assertThat(cache.findFilesForPattern("^[a-z]{3}$")).containsExactlyInAnyOrder((new String[]{"one", "two"}));    
+        assertThat(cache.findFilesForPattern("one"))
+            .containsExactlyInAnyOrder(new String[]{"andone", "one"});    
+        assertThat(cache.findFilesForPattern("^[a-z]{3}$"))
+            .containsExactlyInAnyOrder((new String[]{"one", "two"}));    
     }
 
     @Test
