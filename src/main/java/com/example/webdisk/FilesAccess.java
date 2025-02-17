@@ -2,16 +2,16 @@ package com.example.webdisk;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,6 +38,17 @@ public class FilesAccess {
 
     public InputStream getFile(String fileName) throws IOException {
         return Files.newInputStream(getPathForFileName(fileName)); 
+    }
+
+    @Async("taskExecutor")
+    public CompletableFuture<InputStream> getFileAsync(String fileName) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return Files.newInputStream(getPathForFileName(fileName));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public void putFile(String fileName, MultipartFile content) throws IOException {

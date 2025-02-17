@@ -27,9 +27,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,34 +159,38 @@ public class FilesController {
                 content={ @Content(schema = @Schema(implementation = Void.class)) })
     })
     @GetMapping("/{fileName}")
-    public ResponseEntity<InputStreamResource> getFileForFileName(
+    public CompletableFuture<ResponseEntity<InputStreamResource>> getFileForFileName(
             @PathVariable String fileName,
             HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
+        Instant start = Instant.now();
 
         if (!cache.containsFile(fileName)) {
-            return ResponseEntity.notFound().build();
+            return CompletableFuture.completedFuture(ResponseEntity.notFound().build());
         }
 
         if ("HEAD".equals(request.getMethod())) {
-            return ResponseEntity.ok().build();
+            return CompletableFuture.completedFuture(ResponseEntity.ok().build());
         }
 
-        try {
-            InputStream fileStream = storage.getFile(fileName);
-            InputStreamResource resource = new InputStreamResource(fileStream);
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
-
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(resource);
-        } catch (Exception e) {
-            logger.error(LOG_WEB_FORMAT + ": Unable to read file {}. @Cause:{}",
-                    request.getMethod(), request.getRequestURI(), fileName, e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
+        return storage.getFileAsync(fileName)
+                .thenApply(fileStream -> {
+                    InputStreamResource resource = new InputStreamResource(fileStream);
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
+                    Instant end = Instant.now();
+                    logger.info(">>>>>>>>> Download:{} ms",
+                    Duration.between(start, end).toMillis());
+                    return ResponseEntity.ok()
+                            .headers(headers)
+                            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                            .body(resource);
+                })
+                .exceptionally(e -> {
+                    logger.error(LOG_WEB_FORMAT + ": Unable to read file {}. @Cause:{}",
+                        request.getMethod(), request.getRequestURI(), fileName, e.getMessage());
+                    return ResponseEntity.internalServerError().build();
+                });
     }
     
     /**
