@@ -22,25 +22,34 @@ import org.springframework.web.multipart.MultipartFile;
  * The base directory path is configured via the "webdisk.path" property.
  * 
  * Methods:
- * - listFiles(): Lists all files in the directory that match a specific regex pattern.
- * - getFile(String fileName): Retrieves an InputStream for the specified file.
- * - getFileAsync(String fileName): Asynchronously retrieves an InputStream for the specified file.
- * - putFile(String fileName, MultipartFile file): Stores the provided file with the specified file name.
- * - putFileAsync(String fileName, MultipartFile file): Asynchronously uploads a file to the server.
- * - deleteFile(String fileName): Deletes the file with the specified name.
- * - getPath(): Retrieves the base directory path.
+ * 
+ * <ul>
+ * <li>listFiles(): Lists all files in the directory that match a specific regex pattern.</li>
+ * <li>getFile(String fileName): Retrieves an InputStream for the specified file.</li>
+ * <li>getFileAsync(String fileName): Asynchronously retrieves an InputStream for the specified file.</li>
+ * <li>putFile(String fileName, MultipartFile file): Stores the provided file with the specified file name.</li>
+ * <li>putFileAsync(String fileName, MultipartFile file): Asynchronously uploads a file to the server.</li>
+ * <li>deleteFile(String fileName): Deletes the file with the specified name.</li>
+ * <li>getPath(): Retrieves the base directory path.</li>
+ * </ul>
  * 
  * Private Methods:
- * - getPathForFileName(String fileName): Constructs a Path object by appending the given file name to the base path.
+ * <ul>
+ * <li>getPathForFileName(String fileName): Constructs a Path object by appending the given file name to the base path.</li>
+ * </ul>
  * 
  * Exceptions:
- * - IOException: Thrown if an I/O error occurs during file operations.
- * - RuntimeException: Thrown if an I/O error occurs during asynchronous file operations.
+ * <ul>
+ * <li>IOException: Thrown if an I/O error occurs during file operations.</li>
+ * <li>RuntimeException: Thrown if an I/O error occurs during asynchronous file operations.</li>
+ * </ul>
  * 
  * Annotations:
- * - @Service: Indicates that this class is a Spring service component.
- * - @Value: Injects the value of the "webdisk.path" property.
- * - @Async: Indicates that the method should be executed asynchronously.
+ * <ul>
+ * <li>@Service: Indicates that this class is a Spring service component.</li>
+ * <li>@Value: Injects the value of the "webdisk.path" property.</li>
+ * <li>@Async: Indicates that the method should be executed asynchronously.</li>
+ * </ul>
  */
 @Service
 public class FilesAccess {
