@@ -1,5 +1,8 @@
 package com.example.webdisk;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -49,6 +52,19 @@ public class FilesCache {
      */
     private final Set<String> files = new HashSet<>();
 
+    private FilesAccess storage;
+
+    public FilesCache(FilesAccess storage) {
+        this.storage = storage;
+    }
+
+    public long initCache() throws IOException {
+        // Reading the entire cache is intensive and should be part of telemetry
+        Instant start = Instant.now();
+        storage.listFiles().forEach(this::putFile);
+        Instant end = Instant.now();
+        return Duration.between(start, end).toMillis();
+    }
 
     /**
      * Checks if the cache contains a file with the specified name.

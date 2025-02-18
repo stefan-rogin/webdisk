@@ -94,14 +94,8 @@ public class FilesController {
     public void initialize() {
         try {
             logger.info("Initializing cache from path: {}", storage.getPath());
-            
-            // Reading the entire cache is intensive and should be part of telemetry
-            Instant start = Instant.now();
-            storage.listFiles().forEach(fileName -> cache.putFile(fileName));
-            Instant end = Instant.now();
-
-            logger.info("Cache initialized, took @CacheInit:{} ms",
-                    Duration.between(start, end).toMillis());
+            Long duration = cache.initCache();
+            logger.info("Cache initialized, took @CacheInit:{} ms", duration);
             logger.info("Cache size @CacheSize:{}", cache.getSize());
         } catch (IOException e) {
             // The app will not start if the storage location is inaccessible

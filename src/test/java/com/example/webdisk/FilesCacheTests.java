@@ -2,7 +2,7 @@ package com.example.webdisk;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,9 +15,12 @@ class FilesCacheTests {
 
     private FilesCache cache;
 
+    @Mock
+    private FilesAccess mockStorage;
+
     @BeforeEach
     public void setupEachTest() {
-        cache = new FilesCache();
+        cache = new FilesCache(mockStorage);
     }
 
     @Test
