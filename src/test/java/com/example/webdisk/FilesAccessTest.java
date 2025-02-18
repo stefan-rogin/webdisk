@@ -88,12 +88,12 @@ class FilesAccessTest {
     }
 
     @Test
-    void shouldThrowUncheckedExceptionWhenGetFileIsFaulty() throws Exception {
+    void shouldThrowUncheckedExceptionWhenGetFileIsFaulty() {
         try (MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class)) {
             filesStaticMock.when(() -> Files.newInputStream(any(Path.class))).thenThrow(new IOException());
 
             assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> {
-                filesAccess.getFileAsync("any").get();
+                filesAccess.getFileAsync("any");
             });
         }
     }
