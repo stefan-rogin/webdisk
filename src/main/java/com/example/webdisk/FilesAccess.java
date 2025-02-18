@@ -7,11 +7,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -89,23 +87,6 @@ public class FilesAccess {
     }
 
     /**
-     * Asynchronously retrieves an InputStream for the specified file.
-     *
-     * @param fileName the name of the file to retrieve
-     * @return a CompletableFuture containing the InputStream of the file
-     * @throws RuntimeException if an I/O error occurs
-     */
-    @Async("taskExecutor")
-    public CompletableFuture<InputStream> getFileAsync(String fileName) {
-        try {
-            InputStream inputStream = Files.newInputStream(getPathForFileName(fileName));
-            return CompletableFuture.completedFuture(inputStream);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
      * Stores the provided file with the specified file name.
      *
      * @param fileName the name to be assigned to the stored file
@@ -115,24 +96,6 @@ public class FilesAccess {
     public void putFile(String fileName, MultipartFile file) throws IOException {
         Files.copy(file.getInputStream(), getPathForFileName(fileName), 
                 StandardCopyOption.REPLACE_EXISTING);
-    }
-
-    /**
-     * Asynchronously uploads a file to the server.
-     *
-     * @param fileName the name of the file to be uploaded
-     * @param file the MultipartFile object containing the file data
-     * @return a CompletableFuture representing the asynchronous operation
-     */
-    @Async("taskExecutor")
-    public CompletableFuture<Void> putFileAsync(String fileName, MultipartFile file) {
-        try {
-            Files.copy(file.getInputStream(), getPathForFileName(fileName),
-                    StandardCopyOption.REPLACE_EXISTING);
-            return CompletableFuture.completedFuture(null);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**

@@ -26,10 +26,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.io.IOException;
-import java.nio.file.NoSuchFileException;
+import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,8 +138,7 @@ public class FilesController {
     }
 
     /**
-     * Handles HTTP GET and HEAD requests to retrieve a file by its name. The operation is run
-     * async, using a resizable thread pool. It can be time intensive, depending on download size etc.
+     * Handles HTTP GET and HEAD requests to retrieve a file by its name. 
      * 
      * <pre>
      * curl -O -X GET http://localhost:8080/files/one
@@ -159,44 +157,38 @@ public class FilesController {
                 content={ @Content(schema = @Schema(implementation = Void.class)) })
 
     @GetMapping("/{fileName}")
-    public CompletableFuture<ResponseEntity<InputStreamResource>> getFileForFileName(
+    public ResponseEntity<InputStreamResource> getFileForFileName(
             @PathVariable String fileName,
             HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
 
         if (!cache.containsFile(fileName)) {
-            return CompletableFuture.completedFuture(ResponseEntity.notFound().build());
+            return ResponseEntity.notFound().build();
         }
 
         if ("HEAD".equals(request.getMethod())) {
-            return CompletableFuture.completedFuture(ResponseEntity.ok().build());
+            return ResponseEntity.ok().build();
         }
 
-        return storage.getFileAsync(fileName)
-                .thenApply(fileStream -> {
-                    InputStreamResource resource = new InputStreamResource(fileStream);
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
-                    return ResponseEntity.ok()
-                            .headers(headers)
-                            .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                            .body(resource);
-                })
-                .exceptionally(e -> {
-                    // Repair cache if files were removed offline
-                    Throwable root = e.getCause().getCause();
-                    if (root instanceof NoSuchFileException) {
-                        cache.deleteFile(fileName);
-                    }
-                    logger.error(LOG_WEB_FORMAT + ": Unable to read file {}. @Cause:{}",
-                        request.getMethod(), request.getRequestURI(), fileName, e.getMessage());
-                    return ResponseEntity.internalServerError().build();
-                });
+        try {
+            InputStream fileStream = storage.getFile(fileName);
+            InputStreamResource resource = new InputStreamResource(fileStream);
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + fileName);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resource);
+        } catch (IOException e) {
+            logger.error(LOG_WEB_FORMAT + ": Unable to read file {}. @Cause:{}",
+                    request.getMethod(), request.getRequestURI(), fileName, e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
     }
     
     /**
-     * Handles the HTTP POST request to upload a new file. The operation is run
-     * async, using a resizable thread pool. It can be time intensive, depending on download size etc.
+     * Handles the HTTP POST request to upload a new file. 
      * 
      * <pre>
      * curl -X POST -H "Content-Type: multipart/form-data" -F "file=@./oneup" http://localhost:8080/files/upload
@@ -213,22 +205,22 @@ public class FilesController {
             @Content(schema = @Schema(implementation = FilesPostFileResponse.class), mediaType = "application/json")})
 
     @PostMapping("/upload")
-    public CompletableFuture<ResponseEntity<FilesPostFileResponse>> postFile(
+    public ResponseEntity<FilesPostFileResponse> postFile(
             @RequestParam MultipartFile file,
             HttpServletRequest request) {
         logger.info(LOG_WEB_FORMAT, request.getMethod(), request.getRequestURI());
 
         String newFileName = cache.newFile();
-
-        return storage.putFileAsync(newFileName, file)
-                .thenApply(voidResult -> ResponseEntity.ok(new FilesPostFileResponse(newFileName)))
-                .exceptionally(e -> {
-                    // Revert incomplete create
-                    cache.deleteFile(newFileName);
-                    logger.error(LOG_WEB_FORMAT + ": Unable to post new file. @Cause:{}",
-                            request.getMethod(), request.getRequestURI(), e.getMessage());
-                    return ResponseEntity.internalServerError().build();
-                });
+        try {
+            storage.putFile(newFileName, file);
+        } catch (IOException e) {
+            // Revert incomplete create
+            cache.deleteFile(newFileName);
+            logger.error(LOG_WEB_FORMAT + ": Unable to post new file. @Cause:{}",
+                    request.getMethod(), request.getRequestURI(), e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+        return ResponseEntity.ok(new FilesPostFileResponse(newFileName));
     }
 
     /**
@@ -252,7 +244,7 @@ public class FilesController {
     @ApiResponse(responseCode = "400", description = "Bad Request if the filename is invalid")
 
     @PutMapping("/{fileName}")
-    public CompletableFuture<ResponseEntity<String>> putFile(
+    public ResponseEntity<String> putFile(
             @PathVariable String fileName,
             @RequestParam MultipartFile file,
             HttpServletRequest request) {
@@ -260,23 +252,22 @@ public class FilesController {
 
         // Verify name before accepting operation
         if (!cache.isValid(fileName)) {
-            return CompletableFuture.completedFuture(
-                ResponseEntity.badRequest().body("Invalid filename"));
+            return ResponseEntity.status(400).body("Invalid filename");
         }
 
-        return storage.putFileAsync(fileName, file)
-            .thenApply(voidResult -> {
-                // New file
-                if (!cache.containsFile(fileName)) {
-                    cache.putFile(fileName);
-                }
-                return ResponseEntity.ok("");
-            })
-            .exceptionally(e -> {
-                logger.error(LOG_WEB_FORMAT + ": Unable to put file. @Cause:{}", 
+        try {
+            // FilesAccess.putFile() does replace existing content, if any
+            storage.putFile(fileName, file);
+            // New file
+            if (!cache.containsFile(fileName)) {
+                cache.putFile(fileName);
+            }
+        } catch (IOException e) {
+            logger.error(LOG_WEB_FORMAT + ": Unable to put file. @Cause:{}", 
                     request.getMethod(), request.getRequestURI(), e.getMessage());
-                return ResponseEntity.internalServerError().build();
-            });
+            return ResponseEntity.internalServerError().build();
+        }
+        return ResponseEntity.ok("");
     }
 
     /**

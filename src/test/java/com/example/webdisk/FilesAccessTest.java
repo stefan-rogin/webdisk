@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
@@ -77,28 +76,6 @@ class FilesAccessTest {
     }
 
     @Test
-    void shouldGetFileContentsInAStreamAsync() throws Exception {
-        try (MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class)) {
-            InputStream inputStreamMock = new ByteArrayInputStream("oneContent".getBytes());
-
-            filesStaticMock.when(() -> Files.newInputStream(any(Path.class))).thenReturn(inputStreamMock);
-
-            assertThat(filesAccess.getFileAsync("any").get()).isEqualTo(inputStreamMock);
-        }
-    }
-
-    @Test
-    void shouldThrowUncheckedExceptionWhenGetFileIsFaulty() {
-        try (MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class)) {
-            filesStaticMock.when(() -> Files.newInputStream(any(Path.class))).thenThrow(new IOException());
-
-            assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> {
-                filesAccess.getFileAsync("any");
-            });
-        }
-    }
-
-    @Test
     void shouldStoreFile() throws IOException {
         try (MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class)) {
             MultipartFile multipartFileMock = mock(MultipartFile.class);
@@ -115,26 +92,6 @@ class FilesAccessTest {
             filesAccess.putFile("one", multipartFileMock);
 
             assertThat(fileCopied).isTrue();
-        }
-    }
-
-    @Test
-    void shouldStoreFileAsync() throws IOException {
-        try (MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class)) {
-            MultipartFile multipartFileMock = mock(MultipartFile.class);
-            InputStream inputStreamMock = new ByteArrayInputStream("oneContent".getBytes());
-            AtomicBoolean fileCopiedAsync = new AtomicBoolean(false);
-
-            when(multipartFileMock.getInputStream()).thenReturn(inputStreamMock);
-            filesStaticMock
-                    .when(() -> Files.copy(any(InputStream.class), any(Path.class), any(StandardCopyOption.class)))
-                    .thenAnswer(i -> {
-                        fileCopiedAsync.set(true);
-                        return null;
-                    });
-            filesAccess.putFileAsync("one", multipartFileMock);
-
-            assertThat(fileCopiedAsync).isTrue();
         }
     }
 
