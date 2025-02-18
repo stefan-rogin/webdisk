@@ -126,14 +126,13 @@ public class FilesAccess {
      */
     @Async("taskExecutor")
     public CompletableFuture<Void> putFileAsync(String fileName, MultipartFile file) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                Files.copy(file.getInputStream(), getPathForFileName(fileName), 
-                        StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        try {
+            Files.copy(file.getInputStream(), getPathForFileName(fileName),
+                    StandardCopyOption.REPLACE_EXISTING);
+            return CompletableFuture.completedFuture(null);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

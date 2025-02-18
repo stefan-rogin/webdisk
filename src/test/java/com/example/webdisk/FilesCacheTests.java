@@ -7,6 +7,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 @SpringBootTest
 class FilesCacheTests {
 
@@ -84,6 +87,15 @@ class FilesCacheTests {
         assertThat(cache.getSize()).isEqualTo(1);
         cache.deleteFile("two");
         assertThat(cache.getSize()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldValidateFileNames() {
+        String longName = Stream.generate(() -> "e").limit(100).collect(Collectors.joining());
+        assertThat(cache.isValid("")).isFalse();
+        assertThat(cache.isValid(longName)).isFalse();
+        assertThat(cache.isValid("reGu1ar_")).isTrue();
+        assertThat(cache.isValid("illegal$chars.txt")).isFalse();
     }
 
 }

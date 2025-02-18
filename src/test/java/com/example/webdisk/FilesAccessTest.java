@@ -1,12 +1,11 @@
 package com.example.webdisk;
 
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,8 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -26,11 +23,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+
 @ExtendWith(MockitoExtension.class)
 public class FilesAccessTest {
-
-    @Mock
-    private TaskExecutor taskExecutor;
 
     @Mock
     private Path pathMock;
@@ -40,65 +38,123 @@ public class FilesAccessTest {
 
     @BeforeEach
     public void setup() {
-        filesAccess.setPath("/sample");
+        filesAccess.setPath("/mock");
     }
 
     @Test
     public void shouldListStorageAndFilterValidFiles() throws IOException {
-        Path one = mock(Path.class);      // Valid
-        Path andone = mock(Path.class);   // Valid
-        Path not1 = mock(Path.class);     // Not valid
-        Path twodots = mock(Path.class);  // Not valid
-        Stream<Path> pathStream = Stream.of(one, andone, not1, twodots);
 
-        when(Files.list(any(Path.class))).thenReturn(pathStream);
-        when(one.getFileName()).thenReturn(Path.of("one"));
-        when(andone.getFileName()).thenReturn(Path.of("andone"));
-        when(not1.getFileName()).thenReturn(Path.of("not1.tmp"));
-        when(Files.isDirectory(one)).thenReturn(false);
-        when(Files.isDirectory(andone)).thenReturn(false);
-        when(Files.isDirectory(not1)).thenReturn(false);
-        when(Files.isDirectory(twodots)).thenReturn(true);
+        try (MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class)) {
 
-        assertThat(filesAccess.listFiles()).isEqualTo(Arrays.asList("one", "andone"));
+            Path one = mock(Path.class); // Valid
+            Path andone = mock(Path.class); // Valid
+            Path not1 = mock(Path.class); // Not valid
+            Path twodots = mock(Path.class); // Not valid
+            Stream<Path> pathStream = Stream.of(one, andone, not1, twodots);
+
+            filesStaticMock.when(() -> Files.list(any(Path.class))).thenReturn(pathStream);
+            when(one.getFileName()).thenReturn(Path.of("one"));
+            when(andone.getFileName()).thenReturn(Path.of("andone"));
+            when(not1.getFileName()).thenReturn(Path.of("not1.tmp"));
+            when(Files.isDirectory(one)).thenReturn(false);
+            when(Files.isDirectory(andone)).thenReturn(false);
+            when(Files.isDirectory(not1)).thenReturn(false);
+            when(Files.isDirectory(twodots)).thenReturn(true);
+
+            assertThat(filesAccess.listFiles()).isEqualTo(Arrays.asList("one", "andone"));
+        }
     }
 
     @Test
     public void shouldGetFileContentsInAStream() throws IOException {
-        InputStream inputStreamMock = new ByteArrayInputStream("testContent".getBytes());
-        MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class);
+        try (MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class)) {
+            InputStream inputStreamMock = new ByteArrayInputStream("oneContent".getBytes());
 
-        filesStaticMock.when(() -> Files.newInputStream(any(Path.class))).thenReturn(inputStreamMock);
+            filesStaticMock.when(() -> Files.newInputStream(any(Path.class))).thenReturn(inputStreamMock);
 
-        assertThat(filesAccess.getFile("any")).isEqualTo(inputStreamMock);
+            assertThat(filesAccess.getFile("any")).isEqualTo(inputStreamMock);
+        }
     }
 
     @Test
     public void shouldGetFileContentsInAStreamAsync() throws Exception {
-        InputStream inputStreamMock = new ByteArrayInputStream("testContent".getBytes());
-        MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class);
+        try (MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class)) {
+            InputStream inputStreamMock = new ByteArrayInputStream("oneContent".getBytes());
 
-        filesStaticMock.when(() -> Files.newInputStream(any(Path.class))).thenReturn(inputStreamMock);
+            filesStaticMock.when(() -> Files.newInputStream(any(Path.class))).thenReturn(inputStreamMock);
 
-        assertThat(filesAccess.getFileAsync("any").get()).isEqualTo(inputStreamMock);
+            assertThat(filesAccess.getFileAsync("any").get()).isEqualTo(inputStreamMock);
+        }
+    }
+
+    @Test
+    public void shouldThrowUncheckedExceptionWhenGetFileIsFaulty() throws Exception {
+        try (MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class)) {
+            filesStaticMock.when(() -> Files.newInputStream(any(Path.class))).thenThrow(new IOException());
+
+            assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> {
+                filesAccess.getFileAsync("any").get();
+            });
+        }
     }
 
     @Test
     public void shouldStoreFile() throws IOException {
-        MultipartFile multipartFileMock = mock(MultipartFile.class);
-        InputStream inputStreamMock = new ByteArrayInputStream("testContent".getBytes());
-        MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class);
-        AtomicBoolean fileCopied = new AtomicBoolean(false);
+        try (MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class)) {
+            MultipartFile multipartFileMock = mock(MultipartFile.class);
+            InputStream inputStreamMock = new ByteArrayInputStream("oneContent".getBytes());
+            AtomicBoolean fileCopied = new AtomicBoolean(false);
 
-        when(multipartFileMock.getInputStream()).thenReturn(inputStreamMock);
-        filesStaticMock.when(() -> Files.copy(any(InputStream.class), any(Path.class), any(StandardCopyOption.class)))
-                .thenAnswer(i -> {
-                    fileCopied.set(true);
-                    return 1L;
-                });
+            when(multipartFileMock.getInputStream()).thenReturn(inputStreamMock);
+            filesStaticMock
+                    .when(() -> Files.copy(any(InputStream.class), any(Path.class), any(StandardCopyOption.class)))
+                    .thenAnswer(i -> {
+                        fileCopied.set(true);
+                        return null;
+                    });
+            filesAccess.putFile("one", multipartFileMock);
 
-        filesAccess.putFile("testFile", multipartFileMock);
+            assertThat(fileCopied).isTrue();
+        }
+    }
 
-        assertThat(fileCopied).isTrue();
+    @Test
+    public void shouldStoreFileAsync() throws IOException {
+        try (MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class)) {
+            MultipartFile multipartFileMock = mock(MultipartFile.class);
+            InputStream inputStreamMock = new ByteArrayInputStream("oneContent".getBytes());
+            AtomicBoolean fileCopiedAsync = new AtomicBoolean(false);
+
+            when(multipartFileMock.getInputStream()).thenReturn(inputStreamMock);
+            filesStaticMock
+                    .when(() -> Files.copy(any(InputStream.class), any(Path.class), any(StandardCopyOption.class)))
+                    .thenAnswer(i -> {
+                        fileCopiedAsync.set(true);
+                        return null;
+                    });
+            filesAccess.putFileAsync("one", multipartFileMock);
+
+            assertThat(fileCopiedAsync).isTrue();
+        }
+    }
+
+    @Test
+    public void shouldDeleteFile() throws IOException {
+        try (MockedStatic<Files> filesStaticMock = Mockito.mockStatic(Files.class)) {
+            AtomicBoolean fileDeleted = new AtomicBoolean(false);
+            filesStaticMock.when(() -> Files.delete(any(Path.class)))
+                    .thenAnswer(i -> {
+                        fileDeleted.set(true);
+                        return null;
+                    });
+            filesAccess.deleteFile("any");
+
+            assertThat(fileDeleted).isTrue();
+        }
+    }
+    
+    @Test
+    public void shouldGetInstancePath() {
+        assertThat(filesAccess.getPath()).isEqualTo("/mock/");
     }
 }

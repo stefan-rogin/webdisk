@@ -92,22 +92,22 @@ public class FilesController {
      * storage and adding them to the cache.
      */
     @PostConstruct
-    public void initialize() {
+    private void initialize() {
         try {
-            logger.info("Initializing cache from path: {}", storage.getPath());
+            // logger.info("Initializing cache from path: {}", storage.getPath());
             
             // Reading the entire cache is intensive and should be part of telemetry
-            Instant start = Instant.now();
+            // Instant start = Instant.now();
             storage.listFiles().forEach(fileName -> cache.putFile(fileName));
-            Instant end = Instant.now();
+            // Instant end = Instant.now();
 
-            logger.info("Cache initialized, took @CacheInit:{} ms",
-                    Duration.between(start, end).toMillis());
-            logger.info("Cache size @CacheSize:{}", cache.getSize());
+            // logger.info("Cache initialized, took @CacheInit:{} ms",
+                    // Duration.between(start, end).toMillis());
+            // logger.info("Cache size @CacheSize:{}", cache.getSize());
         } catch (IOException e) {
             // The app will not start if the storage location is inaccessible
-            logger.error("Unable to read from storage location: {}. @Cause:{}",
-                    storage.getPath(), e.getMessage());
+            // logger.error("Unable to read from storage location: {}. @Cause:{}",
+                    // storage.getPath(), e.getMessage());
             throw new RuntimeException("Storage inaccessible, stopping.");
         }
     }
