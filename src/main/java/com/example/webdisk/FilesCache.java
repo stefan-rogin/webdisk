@@ -52,12 +52,27 @@ public class FilesCache {
      */
     private final Set<String> files = new HashSet<>();
 
+    /**
+     * An instance of FilesAccess used to interact with the file storage system.
+     */
     private FilesAccess storage;
 
+    /**
+     * Constructs a new FilesCache instance with the specified storage.
+     *
+     * @param storage the FilesAccess instance used for file storage operations
+     */
     public FilesCache(FilesAccess storage) {
         this.storage = storage;
     }
 
+    /**
+     * Initializes the cache by reading and storing all files from the storage.
+     * This operation is intensive and its duration is measured for telemetry purposes.
+     *
+     * @return the time taken to initialize the cache, in milliseconds
+     * @throws IOException if an I/O error occurs while reading the files
+     */
     public long initCache() throws IOException {
         // Reading the entire cache is intensive and should be part of telemetry
         Instant start = Instant.now();
