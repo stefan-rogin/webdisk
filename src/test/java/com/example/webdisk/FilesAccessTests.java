@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
-class FilesAccessTest {
+class FilesAccessTests {
 
     @Mock
     private Path pathMock;
