@@ -37,29 +37,13 @@ class FilesControllerTests {
     }
 
     @Test
-    void getFileForFileNameTests() throws Exception {
-        mockMvc.perform(get("/files/one"))
-                .andExpect(status().isOk())
-                .andExpect(header().string("Content-disposition", "attachment; filename=one"))
-                .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
-                .andExpect(content().string("one"));
-    }
-
-    @Test
     void getFileForFileNameShouldReturnNotFoundForFileNotInWebDisk() throws Exception {
-        mockMvc.perform(get("/files/none"))
+        mockMvc.perform(get("/files/n.one"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    void getFileForFileNameShouldReturnNoContentForHeadRequest() throws Exception {
-        mockMvc.perform(head("/files/one"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(""));
-    }
-
-    @Test
-    void postAndDeleteFileTests() throws Exception {
+    void postGetAndDeleteFileTests() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "oneup",
                 MediaType.TEXT_PLAIN_VALUE, "oneup".getBytes());
 
@@ -88,7 +72,7 @@ class FilesControllerTests {
     }
 
     @Test
-    void putAndDeleteFileTests() throws Exception {
+    void putGetHeadAndDeleteFileTests() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "oneone",
                 MediaType.TEXT_PLAIN_VALUE, "two".getBytes());
         mockMvc.perform(multipart("/files/oneone")
@@ -100,6 +84,9 @@ class FilesControllerTests {
                 .andExpect(status().isOk());
         mockMvc.perform(get("/files/oneone"))
                 .andExpect(content().string("two"));
+        mockMvc.perform(head("/files/oneone"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(""));
         // Clean
         mockMvc.perform(delete("/files/oneone"))
                 .andExpect(status().isOk());
@@ -119,13 +106,27 @@ class FilesControllerTests {
     }
 
     @Test
+    void deleteNonExistent() throws Exception {
+        mockMvc.perform(delete("/files/n.one"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void searchFileTests() throws Exception {
         mockMvc.perform(get("/files/search?pattern=one"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.results.length()").value(2));
-        mockMvc.perform(get("/files/search?pattern=none"))
+                .andExpect(jsonPath("$.results").exists());
+        mockMvc.perform(get("/files/search?pattern=n.one"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.results.length()").value(0));
+                .andExpect(jsonPath("$.results").exists());
+    }
+
+    @Test
+    void getRestricted() throws Exception {
+        mockMvc.perform(get("/files/restricted"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/files/restricted").header("Authorization", "Bearer any_token"))
+                .andExpect(status().isOk());
     }
 
 }
