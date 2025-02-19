@@ -1,6 +1,6 @@
 # WebDisk
 
-WebDisk is a demo project for evaluation purposes. 
+WebDisk is a demo project for evaluation purposes. The name WebDisk is only for the purpose of the demo and is not related in any way with other existing projects having the same name.
 
 ## 1. Statement of Work
 
@@ -39,22 +39,31 @@ The application can be run in either of these flavors:
 It needs a path specified, either by command param or by changing the default value in application.properties. By default, the storage folder is *./sample*. A web interface is available on port 8080: https://localhost:8080.
 
 #### 2.1.1. From downloaded .jar
-(x)
 
 To run the packaged application, you need JRE 17 installed and a folder to use as files repository.
 
-    java -jar webdisk.jar --webdisk.path=sample
+    java -jar webdisk.jar
+
+Optionally, you can specify a different cache directory
+
+    java -jar webdisk.jar --webdisk.path=cache_directory
 
 #### 2.1.2. From code
-(x)
 
 Source code for the application is available at https://github.com/github-stefan-rogin/webdisk.git or by .zip. 
 The required packages for building the application from source code are JDK 17 and Maven 3.6.
 
+Build, run and test the project, using your favorite IDE.
+
 #### 2.1.3. In Docker
-(x)
 
 As public images are not available, Docker images need to be built from source code before creating containers. 
+
+Build package, then Docker image, then start a container:
+
+     mvn clean package
+     docker build -t webdisk .
+     docker run -p 8080:8080 webdisk
 
 ### 2.2. Service description
 
@@ -65,7 +74,7 @@ The service supports the following requests:
  	- POST /files/ - Uploads a new file.
  	- PUT /files/{fileName} - Updates an existing file.
  	- DELETE /files/{fileName} - Deletes a file by its name.
- 	- GET /files/search - Searches for files matching a given pattern.
+ 	- GET /files/search - Searches for files matching a given pattern, case sensitive.
  	- GET /files/size - Returns the total number of files stored by the application.
  	- GET /files/restricted - Demo endpoint for security implementation.
 
@@ -73,7 +82,7 @@ The service supports the following requests:
 
 The service is built with SpringBoot framework.
 
-(x) Components diagram
+![Class overview](src/main/resources/public/classes.jpg)
 
 #### 2.2.2. Performance
 
@@ -105,12 +114,22 @@ Maintaining data consistency between cache and storage was considered out of sco
 
 Throttling and queueing requests were considered out of scope, therefore they were not addressed.
 
+### 2.3. Project description
 
-### 2.3. Documentation
+#### 2.3.1. Testing
+
+- The project contains both unit and integration tests. Mocking is done with Mockito.
+- For SonarQube reporting, the build generates JaCoCo reports.
+- Performance evaluation tests were done with a large generated data set, as described earlier.
+
+![Class overview](src/main/resources/public/coverage.jpg)
+
+### 2.4. Documentation
 
 A standard Swagger API UI is available at http://localhost:8080/swagger-ui/index.html.
+For the project itself, Javadoc files are available at http://localhost:8080/apidocs/index.html, once the application is started.
 
-#### 2.3.1. Example commands
+#### 2.4.1. Example commands
 
 Once started, commands can be run by any means of invoking a web service: curl, Postman, IDE plugins etc. .
 
@@ -147,6 +166,4 @@ Once started, commands can be run by any means of invoking a web service: curl, 
     Output:
     Authorized
     ...
-
-2.3. Project description
 
