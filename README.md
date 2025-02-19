@@ -70,7 +70,7 @@ Build package, then Docker image, then start a container:
 The service supports the following requests:
 
  	- GET /files/{fileName} - Retrieves a file by its name.
- 	- HEAD /files/{fileName} - Check if a file exists, whitout getting its content.
+ 	- HEAD /files/{fileName} - Check if a file exists, whithout getting its content.
  	- POST /files/ - Uploads a new file.
  	- PUT /files/{fileName} - Updates an existing file.
  	- DELETE /files/{fileName} - Deletes a file by its name.
@@ -86,17 +86,17 @@ The service is built with SpringBoot framework.
 
 #### 2.2.2. Performance
 
-The app's performance concerns are adressed mainly by a stategy of handling in memory as much of the service's operations as possible. For this purpose, a simplistic cache solution is implemented in FilesCache class, which holds a registry of all stored files in memory. More robust and scalable solutions - Memcached, Redis - were considered out of scope and against the requirements.
+The app's performance concerns are addressed mainly by a strategy of handling in memory as much of the service's operations as possible. For this purpose, a simplistic cache solution is implemented in FilesCache class, which holds a registry of all stored files in memory. More robust and scalable solutions - Memcached, Redis - were considered out of scope and against the requirements.
 
 The main concern is memory footprint, which approximates at 6.5GB for 10^8 files (ten times the minimum requirements). This is in the realm of possibility, albeit restricting the amount of information available for each file to their names. Content type, last modified etc. would further increase the memory footprint and require alternative solutions already mentioned or similar.
 
-A potential slow operation is performed at the start of the application, when the entire list of files is loaded to memory - cache initialization. A second performance concern is the Regexp pattern search for files. Both scenarios were tested on a large data set, on common hardware. Approximately 1,000,000 files were generated with a shell script generate.sh. Performace results were satisfactory - 1.4s for cache initilization, 120ms average for file name pattern search.
+A potential slow operation is performed at the start of the application, when the entire list of files is loaded to memory - cache initialization. A second performance concern is the Regexp pattern search for files. Both scenarios were tested on a large data set, on common hardware. Approximately 1,000,000 files were generated with a shell script generate.sh. Performance results were satisfactory - 1.4s for cache initialization, 120ms average for file name pattern search.
 
 #### 2.2.3. Logging and monitoring
 
 Logging is provided by Logback. The default log file is webdisk.log and is automatically rotated daily at 00:00 local. Default log level is INFO for both the web server and the app - configurable independently.
 
-- Telemetry: Operations that are concerning app performace - cache initialization, file search - are measured and logged.
+- Telemetry: Operations that are concerning app performance - cache initialization, file search - are measured and logged.
 - Errors: When encountering errors, the originating web request is logged together with the error, where applicable, for easing investigations.
 - Requests: A basic trace of all web requests are left for monitoring and BI.
 
@@ -104,11 +104,11 @@ Logging texts use tags - e.g. @Cause, @Request - to facilitate log aggregation, 
 
 #### 2.2.4. Security
 
-For ease of evaluating the demo, security is only implemented in one endpoint additional to SoW. It demonstrates a pre-authentication scenario. Each request is filtered using the authentication token, carried in a standard Authorization header with a Bearer token. An external authetication system to validate tokens was considered out of scope, therefore any token present is considered valid.
+For ease of evaluating the demo, security is only implemented in one endpoint additional to SoW. It demonstrates a pre-authentication scenario. Each request is filtered using the authentication token, carried in a standard Authorization header with a Bearer token. An external authentication system to validate tokens was considered out of scope, therefore any token present is considered valid.
 
 #### 2.2.5. Data consistency
 
-Maintaining data consistency between cache and storage was considered out of scope. The only synchronization opportunity is at cache initialization. The only error correction measure is taken in GET /files/{filename}, where a cache presence folowed by a FileNotFound error from the storage service, will result in the removal of the queried key from the cache.
+Maintaining data consistency between cache and storage was considered out of scope. The only synchronization opportunity is at cache initialization. The only error correction measure is taken in GET /files/{filename}, where a cache presence followed by a FileNotFound error from the storage service, will result in the removal of the queried key from the cache.
 
 #### 2.2.6. Throttling and queueing
 
