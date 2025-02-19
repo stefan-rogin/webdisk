@@ -6,7 +6,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.4.2</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <groupId>com.example</groupId>
     <artifactId>webdisk</artifactId>
@@ -114,7 +114,6 @@
                 <configuration>
                     <source>1.17</source>
                     <outputDirectory>${project.build.directory}/classes/public/javadoc</outputDirectory>
-                    <!-- <outputDirectory>src/main/resources/public/</outputDirectory> -->
                     <show>protected</show>
                     <failOnError>false</failOnError>
                     <failOnWarning>false</failOnWarning>

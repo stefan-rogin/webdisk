@@ -1,6 +1,6 @@
 # WebDisk
 
-WebDisk is a demo project for evaluation purposes. The name WebDisk is only for the purpose of the demo and is not related in any way with other existing projects having the same name.
+WebDisk is a demo project for evaluation purposes. The name WebDisk is only for demo and is not related in any way with other existing projects having the same name.
 
 ## 1. Statement of Work
 
