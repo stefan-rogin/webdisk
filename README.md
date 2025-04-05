@@ -82,8 +82,6 @@ The service supports the following requests:
 
 The service is built with SpringBoot framework.
 
-![Class overview](src/main/resources/public/classes.jpg)
-
 #### 2.2.2. Performance
 
 The app's performance concerns are addressed mainly by a strategy of handling in memory as much of the service's operations as possible. For this purpose, a simplistic cache solution is implemented in FilesCache class, which holds a registry of all stored files in memory. More robust and scalable solutions - Memcached, Redis - were considered out of scope and against the requirements.
@@ -121,8 +119,6 @@ Throttling and queueing requests were considered out of scope, therefore they we
 - The project contains both unit and integration tests. Mocking is done with Mockito.
 - For SonarQube reporting, the build generates JaCoCo reports.
 - Performance evaluation tests were done with a large generated data set, as described earlier.
-
-![Class overview](src/main/resources/public/coverage.jpg)
 
 ### 2.4. Documentation
 

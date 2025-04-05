@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.example.webdisk"},{"l":"com.example.webdisk.response"},{"l":"com.example.webdisk.security"}];updateSearchResults();

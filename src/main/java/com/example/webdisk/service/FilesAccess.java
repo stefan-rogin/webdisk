@@ -1,4 +1,4 @@
-package com.example.webdisk;
+package com.example.webdisk.service;
 
 import java.io.IOException;
 import java.io.InputStream;

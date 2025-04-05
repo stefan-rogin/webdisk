@@ -1,4 +1,4 @@
-package com.example.webdisk;
+package com.example.webdisk.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import com.example.webdisk.response.FilesPostFileResponse;
 import com.example.webdisk.response.FilesSearchResponse;
 import com.example.webdisk.response.FilesSizeResponse;
+import com.example.webdisk.service.FilesAccess;
+import com.example.webdisk.service.FilesCache;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

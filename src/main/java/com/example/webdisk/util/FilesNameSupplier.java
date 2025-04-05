@@ -1,4 +1,4 @@
-package com.example.webdisk;
+package com.example.webdisk.util;
 
 import java.util.function.Supplier;
 import java.util.random.RandomGenerator;

@@ -1,4 +1,4 @@
-package com.example.webdisk;
+package com.example.webdisk.service;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -11,6 +11,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
+
+import com.example.webdisk.util.FilesNameSupplier;
 
 /**
  * Service class for managing a cache of file names.

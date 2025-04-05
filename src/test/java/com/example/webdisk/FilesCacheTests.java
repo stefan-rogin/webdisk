@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import com.example.webdisk.service.FilesAccess;
+import com.example.webdisk.service.FilesCache;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.stream.Collectors;

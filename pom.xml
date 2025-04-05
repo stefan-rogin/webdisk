@@ -70,56 +70,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.12</version>
-                <configuration>
-                    <excludes>
-                        <exclude>org/springframework/boot/actuate/endpoint/invoke/MissingParametersException</exclude>
-                    </excludes>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>prepare-agent</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.sonarsource.scanner.maven</groupId>
-                <artifactId>sonar-maven-plugin</artifactId>
-                <version>5.0.0.4389</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.11.2</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>javadoc</goal>
-                        </goals>
-                        <phase>package</phase>
-                    </execution>
-                </executions>
-                <configuration>
-                    <source>1.17</source>
-                    <outputDirectory>${project.build.directory}/classes/public/javadoc</outputDirectory>
-                    <show>protected</show>
-                    <failOnError>false</failOnError>
-                    <failOnWarning>false</failOnWarning>
-                    <quiet>true</quiet>                
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
