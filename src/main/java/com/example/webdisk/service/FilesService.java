@@ -52,7 +52,7 @@ import org.springframework.web.multipart.MultipartFile;
  * </ul>
  */
 @Service
-public class FilesAccess {
+public class FilesService {
 
     private String path;
 

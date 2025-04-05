@@ -2,7 +2,7 @@ package com.example.webdisk;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.webdisk.service.FilesAccess;
+import com.example.webdisk.service.FilesService;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,7 +35,7 @@ class FilesAccessTests {
     private Path pathMock;
 
     @InjectMocks
-    private FilesAccess filesAccess;
+    private FilesService filesAccess;
 
     @BeforeEach
     public void setup() {

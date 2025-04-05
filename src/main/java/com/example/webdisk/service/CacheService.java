@@ -46,7 +46,7 @@ import com.example.webdisk.util.FilesNameSupplier;
  * </pre>
  */
 @Service
-public class FilesCache {
+public class CacheService {
 
     /**
      * A set that holds the names of the files in the cache.
@@ -57,14 +57,14 @@ public class FilesCache {
     /**
      * An instance of FilesAccess used to interact with the file storage system.
      */
-    private FilesAccess storage;
+    private FilesService storage;
 
     /**
      * Constructs a new FilesCache instance with the specified storage.
      *
      * @param storage the FilesAccess instance used for file storage operations
      */
-    public FilesCache(FilesAccess storage) {
+    public CacheService(FilesService storage) {
         this.storage = storage;
     }
 

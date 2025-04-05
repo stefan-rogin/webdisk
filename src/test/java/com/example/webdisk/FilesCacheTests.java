@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import com.example.webdisk.service.FilesAccess;
-import com.example.webdisk.service.FilesCache;
+import com.example.webdisk.service.FilesService;
+import com.example.webdisk.service.CacheService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,14 +16,14 @@ import java.util.stream.Stream;
 @SpringBootTest
 class FilesCacheTests {
 
-    private FilesCache cache;
+    private CacheService cache;
 
     @Mock
-    private FilesAccess mockStorage;
+    private FilesService mockStorage;
 
     @BeforeEach
     public void setupEachTest() {
-        cache = new FilesCache(mockStorage);
+        cache = new CacheService(mockStorage);
     }
 
     @Test

@@ -17,8 +17,8 @@ import org.springframework.http.ResponseEntity;
 import com.example.webdisk.response.FilesPostFileResponse;
 import com.example.webdisk.response.FilesSearchResponse;
 import com.example.webdisk.response.FilesSizeResponse;
-import com.example.webdisk.service.FilesAccess;
-import com.example.webdisk.service.FilesCache;
+import com.example.webdisk.service.FilesService;
+import com.example.webdisk.service.CacheService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -71,8 +71,8 @@ import jakarta.servlet.http.HttpServletRequest;
 @Tag(name = "WebDisk")
 public class FilesController {
 
-    private FilesCache cache;
-    private FilesAccess storage;
+    private CacheService cache;
+    private FilesService storage;
 
     private static final Logger logger = LoggerFactory.getLogger(FilesController.class);
     private static final String LOG_WEB_FORMAT = "@Requst:{} {}";
@@ -83,7 +83,7 @@ public class FilesController {
      * @param cache   the cache to be used by this controller
      * @param storage the storage to be used by this controller
      */
-    public FilesController(FilesCache cache, FilesAccess storage) {
+    public FilesController(CacheService cache, FilesService storage) {
         this.cache = cache;
         this.storage = storage;
     }
